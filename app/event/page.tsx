@@ -1,90 +1,99 @@
+'use client'
+
 import { BottomNav } from '@/app/components/ui/BottomNav'
 import { Card } from '@/app/components/ui/Card'
 import { Pill } from '@/app/components/ui/Pill'
 import { EmptyState } from '@/app/components/ui/EmptyState'
 import { PageHeader } from '@/app/components/ui/PageHeader'
+import { useEvents } from '@/app/hooks/useGaleri'
 
-const UPCOMING = [
-  { id: '1', nama: 'Buka Puasa Bersama', tanggal: '28', bulan: 'Mar', tahun: '2025', lokasi: 'Bandung', countdown: 'H-10' },
-  { id: '2', nama: 'Lebaran ke Guru', tanggal: '10', bulan: 'Apr', tahun: '2025', lokasi: 'Cimahi', countdown: 'H-23' },
-]
-
-const SELESAI = [
-  { id: '3', nama: 'Reuni Kecil 2024', tanggal: '12', bulan: 'Des', tahun: '2024', lokasi: 'Jakarta' },
-  { id: '4', nama: 'Bukber Ramadan 2024', tanggal: '15', bulan: 'Mar', tahun: '2024', lokasi: 'Bandung' },
-]
+function getDaysUntil(dateStr: string): number {
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  const target = new Date(dateStr)
+  return Math.ceil((target.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
+}
 
 export default function EventPage() {
+  const { events, loading } = useEvents()
+
+  const today = new Date().toISOString().split('T')[0]
+  const upcoming = events.filter(e => e.tanggal >= today)
+  const past = events.filter(e => e.tanggal < today)
+
   return (
-    <main className="pb-32">
-      <div className="px-4 pt-5 pb-2 animate-in delay-1">
+    <main style={{ paddingBottom: '100px' }}>
+      <div style={{ padding: '20px 16px 8px' }}>
         <PageHeader title="Event Angkatan" />
       </div>
 
-      <div className="px-4 flex flex-col gap-4">
-        {/* Upcoming */}
-        <div className="animate-in delay-2">
-          <p className="text-[9px] font-mono tracking-widest uppercase text-[var(--mut)] mb-2">
-            Akan Datang
-          </p>
-          {UPCOMING.length === 0 ? (
-            <EmptyState
-              icon={
-                <svg viewBox="0 0 24 24" fill="none" stroke="var(--acc)" className="w-7 h-7" strokeWidth={1.8}>
-                  <rect x="3" y="4" width="18" height="18" rx="2" />
-                  <line x1="16" y1="2" x2="16" y2="6" />
-                  <line x1="8" y1="2" x2="8" y2="6" />
-                  <line x1="3" y1="10" x2="21" y2="10" />
-                </svg>
-              }
-              title="Belum ada event"
-              description="Event mendatang akan muncul di sini."
-            />
-          ) : (
-            <div className="flex flex-col gap-3">
-              {UPCOMING.map(e => (
-                <Card key={e.id} className="flex gap-3 items-center">
-                  <div className="w-12 h-12 rounded-xl bg-[var(--acsl)] border border-[var(--acs)] flex flex-col items-center justify-center flex-shrink-0">
-                    <span className="text-[15px] font-bold font-mono-num text-[var(--acc)]">{e.tanggal}</span>
-                    <span className="text-[7px] font-bold text-[var(--acc)]">{e.bulan}</span>
-                  </div>
-                  <div className="flex-1">
-                    <div className="text-[12px] font-bold text-[var(--txt)]">{e.nama}</div>
-                    <div className="text-[9px] text-[var(--mut)]">📍 {e.lokasi}</div>
-                    <Pill label="Upcoming" variant="green" className="mt-1" />
-                  </div>
-                  <span className="text-[9px] font-bold text-white bg-[var(--acc)] px-2 py-0.5 rounded-full font-mono-num flex-shrink-0">
-                    {e.countdown}
-                  </span>
-                </Card>
-              ))}
-            </div>
-          )}
-        </div>
+      <div style={{ padding: '0 16px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
+        {loading ? (
+          <div style={{ textAlign: 'center', padding: '32px', color: '#A0B0A4', fontSize: '12px' }}>Memuat...</div>
+        ) : events.length === 0 ? (
+          <EmptyState
+            icon={<svg viewBox="0 0 24 24" fill="none" stroke="#2E7D52" style={{ width: '28px', height: '28px' }} strokeWidth={1.8}><rect x="3" y="4" width="18" height="18" rx="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" /></svg>}
+            title="Belum ada event"
+            description="Event mendatang akan muncul di sini."
+          />
+        ) : (
+          <>
+            {upcoming.length > 0 && (
+              <div>
+                <p style={{ fontSize: '9px', fontFamily: 'monospace', letterSpacing: '1px', textTransform: 'uppercase', color: '#A0B0A4', marginBottom: '10px' }}>Akan Datang</p>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                  {upcoming.map(e => {
+                    const days = getDaysUntil(e.tanggal)
+                    const d = new Date(e.tanggal)
+                    return (
+                      <Card key={e.id} style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                        <div style={{ width: '46px', height: '46px', borderRadius: '12px', background: '#EAF6EE', border: '1px solid #D4EDDE', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                          <span style={{ fontSize: '15px', fontWeight: 700, color: '#2E7D52', fontFamily: 'Space Grotesk, monospace', lineHeight: 1 }}>{d.getDate()}</span>
+                          <span style={{ fontSize: '7px', fontWeight: 700, color: '#2E7D52' }}>{d.toLocaleDateString('id-ID', { month: 'short' })}</span>
+                        </div>
+                        <div style={{ flex: 1 }}>
+                          <div style={{ fontSize: '13px', fontWeight: 700, color: '#1C2B22' }}>{e.nama_event}</div>
+                          {e.lokasi && <div style={{ fontSize: '9px', color: '#A0B0A4' }}>📍 {e.lokasi}</div>}
+                          <Pill label="Upcoming" variant="green" className="mt-1" />
+                        </div>
+                        {days >= 0 && (
+                          <span style={{ fontSize: '9px', fontWeight: 700, color: 'white', background: '#2E7D52', padding: '3px 8px', borderRadius: '20px', fontFamily: 'Space Grotesk, monospace', flexShrink: 0 }}>
+                            H-{days}
+                          </span>
+                        )}
+                      </Card>
+                    )
+                  })}
+                </div>
+              </div>
+            )}
 
-        {/* Selesai */}
-        <div className="animate-in delay-3">
-          <p className="text-[9px] font-mono tracking-widest uppercase text-[var(--mut)] mb-2">
-            Sudah Lewat
-          </p>
-          <div className="flex flex-col gap-3">
-            {SELESAI.map(e => (
-              <Card key={e.id} className="flex gap-3 items-center opacity-60">
-                <div className="w-12 h-12 rounded-xl bg-[var(--surf)] border border-[var(--bord)] flex flex-col items-center justify-center flex-shrink-0">
-                  <span className="text-[15px] font-bold font-mono-num text-[var(--sec)]">{e.tanggal}</span>
-                  <span className="text-[7px] font-bold text-[var(--sec)]">{e.bulan}</span>
+            {past.length > 0 && (
+              <div>
+                <p style={{ fontSize: '9px', fontFamily: 'monospace', letterSpacing: '1px', textTransform: 'uppercase', color: '#A0B0A4', marginBottom: '10px' }}>Sudah Lewat</p>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                  {past.map(e => {
+                    const d = new Date(e.tanggal)
+                    return (
+                      <Card key={e.id} style={{ display: 'flex', gap: '12px', alignItems: 'center', opacity: 0.6 }}>
+                        <div style={{ width: '46px', height: '46px', borderRadius: '12px', background: '#F5F0E8', border: '1px solid #E2D9C8', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                          <span style={{ fontSize: '15px', fontWeight: 700, color: '#5A6E5E', fontFamily: 'Space Grotesk, monospace', lineHeight: 1 }}>{d.getDate()}</span>
+                          <span style={{ fontSize: '7px', fontWeight: 700, color: '#5A6E5E' }}>{d.toLocaleDateString('id-ID', { month: 'short' })}</span>
+                        </div>
+                        <div style={{ flex: 1 }}>
+                          <div style={{ fontSize: '13px', fontWeight: 700, color: '#1C2B22' }}>{e.nama_event}</div>
+                          {e.lokasi && <div style={{ fontSize: '9px', color: '#A0B0A4' }}>📍 {e.lokasi}</div>}
+                          <Pill label="Selesai" variant="muted" />
+                        </div>
+                      </Card>
+                    )
+                  })}
                 </div>
-                <div className="flex-1">
-                  <div className="text-[12px] font-bold text-[var(--txt)]">{e.nama}</div>
-                  <div className="text-[9px] text-[var(--mut)]">📍 {e.lokasi}</div>
-                  <Pill label="Selesai" variant="muted" className="mt-1" />
-                </div>
-              </Card>
-            ))}
-          </div>
-        </div>
+              </div>
+            )}
+          </>
+        )}
       </div>
-
       <BottomNav />
     </main>
   )

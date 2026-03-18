@@ -7,237 +7,146 @@ import { Card } from '@/app/components/ui/Card'
 import { Pill } from '@/app/components/ui/Pill'
 import { EmptyState } from '@/app/components/ui/EmptyState'
 import { PageHeader } from '@/app/components/ui/PageHeader'
+import { useTagihan, useAnggota, usePembayaranCount, submitPembayaran } from '@/app/hooks/useIuran'
+import { uploadFile } from '@/app/hooks/useUpload'
 
-const DUMMY_TAGIHAN = [
-  {
-    id: '1',
-    judul: 'Iuran Bukber Ramadan 2025',
-    nominal: 50000,
-    tipe: 'per_acara',
-    batas_bayar: '25 Mar 2025',
-    sudah_bayar: 32,
-    total_anggota: 47,
-  },
-  {
-    id: '2',
-    judul: 'Kas Rutin April 2025',
-    nominal: 20000,
-    tipe: 'rutin',
-    batas_bayar: '30 Apr 2025',
-    sudah_bayar: 21,
-    total_anggota: 47,
-  },
-]
+function fmt(n: number) {
+  return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(n)
+}
 
-const DUMMY_ANGGOTA = [
-  { id: '1', nama: 'Ahmad Fauzi' },
-  { id: '2', nama: 'Budi Santoso' },
-  { id: '3', nama: 'Citra Dewi' },
-  { id: '4', nama: 'Dian Permata' },
-  { id: '5', nama: 'Eko Prasetyo' },
-]
+function TagihanCard({ tagihan, onBayar }: { tagihan: any, onBayar: (t: any) => void }) {
+  const { count, total } = usePembayaranCount(tagihan.id)
+  const pct = total > 0 ? Math.round((count / total) * 100) : 0
 
-function formatRupiah(amount: number): string {
-  return new Intl.NumberFormat('id-ID', {
-    style: 'currency',
-    currency: 'IDR',
-    minimumFractionDigits: 0,
-  }).format(amount)
+  return (
+    <Card style={{ borderLeft: '3px solid #2E7D52' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '4px' }}>
+        <div style={{ flex: 1 }}>
+          <div style={{ fontSize: '12px', fontWeight: 700, color: '#1C2B22' }}>{tagihan.judul}</div>
+          {tagihan.batas_bayar && <div style={{ fontSize: '9px', color: '#A0B0A4', marginTop: '2px' }}>Deadline: {new Date(tagihan.batas_bayar).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}</div>}
+        </div>
+        <Pill label={tagihan.tipe === 'rutin' ? 'Rutin' : 'Per Acara'} variant={tagihan.tipe === 'rutin' ? 'green' : 'accent'} />
+      </div>
+      <div style={{ position: 'relative', marginTop: '10px' }}>
+        <div style={{ height: '6px', background: '#E2D9C8', borderRadius: '3px', overflow: 'hidden' }}>
+          <div style={{ height: '100%', width: `${pct}%`, background: '#2E7D52', borderRadius: '3px', transition: 'width 0.3s' }} />
+        </div>
+        <span style={{ position: 'absolute', right: 0, top: '-14px', fontSize: '9px', fontWeight: 700, color: '#2E7D52', fontFamily: 'Space Grotesk, monospace' }}>{pct}%</span>
+      </div>
+      <div style={{ fontSize: '9px', color: '#A0B0A4', marginTop: '4px' }}>{count} dari {total} orang sudah bayar</div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '10px' }}>
+        <span style={{ fontSize: '16px', fontWeight: 700, color: '#2E7D52', fontFamily: 'Space Grotesk, monospace' }}>{fmt(tagihan.nominal)}</span>
+        <button onClick={() => onBayar(tagihan)} style={{ background: '#2E7D52', color: 'white', border: 'none', borderRadius: '20px', padding: '7px 18px', fontSize: '10px', fontWeight: 700, cursor: 'pointer', fontFamily: 'Nunito, sans-serif' }}>
+          Bayar →
+        </button>
+      </div>
+    </Card>
+  )
 }
 
 export default function IuranPage() {
-  const [selectedTagihan, setSelectedTagihan] = useState<typeof DUMMY_TAGIHAN[0] | null>(null)
-  const [selectedAnggota, setSelectedAnggota] = useState('')
+  const { tagihan, loading } = useTagihan()
+  const { anggota } = useAnggota()
+  const [selected, setSelected] = useState<any>(null)
+  const [anggotaId, setAnggotaId] = useState('')
   const [jumlah, setJumlah] = useState('')
   const [file, setFile] = useState<File | null>(null)
+  const [submitting, setSubmitting] = useState(false)
   const [submitted, setSubmitted] = useState(false)
 
-  function handleOpen(tagihan: typeof DUMMY_TAGIHAN[0]) {
-    setSelectedTagihan(tagihan)
-    setJumlah(String(tagihan.nominal))
-    setSelectedAnggota('')
+  function handleOpen(t: any) {
+    setSelected(t)
+    setJumlah(String(t.nominal))
+    setAnggotaId('')
     setFile(null)
     setSubmitted(false)
   }
 
-  function handleClose() {
-    setSelectedTagihan(null)
-  }
+  async function handleSubmit() {
+    if (!anggotaId || !file || !jumlah || !selected) return
+    setSubmitting(true)
 
-  function handleSubmit() {
+    const url = await uploadFile(file, 'basyar14/iuran')
+    if (!url) { setSubmitting(false); alert('Gagal upload foto'); return }
+
+    const { error } = await submitPembayaran({
+      anggota_id: anggotaId,
+      tagihan_id: selected.id,
+      jumlah_bayar: parseInt(jumlah),
+      foto_bukti_url: url,
+    })
+
+    setSubmitting(false)
+    if (error) { alert('Gagal submit: ' + error.message); return }
     setSubmitted(true)
-    setTimeout(() => {
-      handleClose()
-    }, 1500)
+    setTimeout(() => setSelected(null), 2000)
   }
 
   return (
-    <main className="pb-32">
-      <div className="px-4 pt-5 pb-2 animate-in delay-1">
-        <PageHeader
-          title="Bayar Iuran"
-          subtitle="Pilih tagihan yang ingin dibayar."
-        />
+    <main style={{ paddingBottom: '100px' }}>
+      <div style={{ padding: '20px 16px 8px' }}>
+        <PageHeader title="Bayar Iuran" subtitle="Pilih tagihan yang ingin dibayar." />
       </div>
 
-      <div className="px-4 flex flex-col gap-4">
-        <p className="text-[9px] font-mono tracking-widest uppercase text-[var(--mut)] animate-in delay-1">
-          Tagihan Aktif
-        </p>
+      <div style={{ padding: '0 16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+        <p style={{ fontSize: '9px', fontFamily: 'monospace', letterSpacing: '1px', textTransform: 'uppercase', color: '#A0B0A4' }}>Tagihan Aktif</p>
 
-        {DUMMY_TAGIHAN.length === 0 ? (
+        {loading ? (
+          <div style={{ textAlign: 'center', padding: '32px', color: '#A0B0A4', fontSize: '12px' }}>Memuat...</div>
+        ) : tagihan.length === 0 ? (
           <EmptyState
-            icon={
-              <svg viewBox="0 0 24 24" fill="none" stroke="var(--acc)" className="w-7 h-7" strokeWidth={1.8}>
-                <line x1="12" y1="1" x2="12" y2="23" />
-                <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
-              </svg>
-            }
+            icon={<svg viewBox="0 0 24 24" fill="none" stroke="#2E7D52" style={{ width: '28px', height: '28px' }} strokeWidth={1.8}><line x1="12" y1="1" x2="12" y2="23" /><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" /></svg>}
             title="Belum ada tagihan"
             description="Tagihan iuran akan muncul di sini."
           />
         ) : (
-          DUMMY_TAGIHAN.map((t, i) => {
-            const pct = Math.round((t.sudah_bayar / t.total_anggota) * 100)
-            return (
-              <Card
-                key={t.id}
-                className={`animate-in delay-${i + 2} border-l-[3px] border-l-[var(--acc)]`}
-              >
-                <div className="flex justify-between items-start mb-1">
-                  <div className="flex-1">
-                    <div className="text-[12px] font-bold text-[var(--txt)]">{t.judul}</div>
-                    <div className="text-[9px] text-[var(--mut)] mt-0.5">
-                      Deadline: {t.batas_bayar}
-                    </div>
-                  </div>
-                  <Pill
-                    label={t.tipe === 'rutin' ? 'Rutin' : 'Per Acara'}
-                    variant={t.tipe === 'rutin' ? 'green' : 'accent'}
-                  />
-                </div>
-
-                {/* Progress Bar */}
-                <div className="relative mt-3">
-                  <div className="h-1.5 bg-[var(--bord)] rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-[var(--acc)] rounded-full transition-all"
-                      style={{ width: `${pct}%` }}
-                    />
-                  </div>
-                  <span className="absolute -top-4 right-0 text-[9px] font-bold text-[var(--acc)] font-mono-num">
-                    {pct}%
-                  </span>
-                </div>
-                <p className="text-[9px] text-[var(--mut)] mt-1.5">
-                  {t.sudah_bayar} dari {t.total_anggota} orang sudah bayar
-                </p>
-
-                <div className="flex justify-between items-center mt-3">
-                  <span className="text-[16px] font-bold text-[var(--acc)] font-mono-num">
-                    {formatRupiah(t.nominal)}
-                  </span>
-                  <button
-                    onClick={() => handleOpen(t)}
-                    className="text-[10px] font-bold text-white bg-[var(--acc)] px-4 py-2 rounded-full active:opacity-80 transition-opacity"
-                  >
-                    Bayar →
-                  </button>
-                </div>
-              </Card>
-            )
-          })
+          tagihan.map(t => <TagihanCard key={t.id} tagihan={t} onBayar={handleOpen} />)
         )}
       </div>
 
-      {/* Bottom Sheet Form */}
-      <BottomSheet
-        isOpen={!!selectedTagihan}
-        onClose={handleClose}
-        title="Konfirmasi Pembayaran"
-        subtitle={selectedTagihan?.judul}
-      >
+      <BottomSheet isOpen={!!selected} onClose={() => setSelected(null)} title="Konfirmasi Pembayaran" subtitle={selected?.judul}>
         {submitted ? (
-          <div className="flex flex-col items-center gap-3 py-8">
-            <div className="w-14 h-14 rounded-full bg-[#EAF7EE] flex items-center justify-center">
-              <svg viewBox="0 0 24 24" fill="none" stroke="var(--ok)" className="w-7 h-7" strokeWidth={2.5}>
-                <polyline points="20 6 9 17 4 12" />
-              </svg>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px', padding: '32px 0' }}>
+            <div style={{ width: '56px', height: '56px', borderRadius: '50%', background: '#EAF7EE', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <svg viewBox="0 0 24 24" fill="none" stroke="#1E7B3A" style={{ width: '28px', height: '28px' }} strokeWidth={2.5}><polyline points="20 6 9 17 4 12" /></svg>
             </div>
-            <div className="text-[14px] font-bold text-[var(--txt)]">Bukti terkirim!</div>
-            <div className="text-[11px] text-[var(--mut)] text-center">
-              Menunggu verifikasi dari bendahara.
-            </div>
+            <div style={{ fontSize: '14px', fontWeight: 700, color: '#1C2B22' }}>Bukti terkirim!</div>
+            <div style={{ fontSize: '11px', color: '#A0B0A4', textAlign: 'center' }}>Menunggu verifikasi dari bendahara.</div>
           </div>
         ) : (
-          <div className="flex flex-col gap-3">
-            {/* Pilih Nama */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
             <div>
-              <label className="text-[9px] font-mono tracking-widest uppercase text-[var(--mut)] mb-1 block">
-                Pilih Nama
-              </label>
-              <select
-                value={selectedAnggota}
-                onChange={e => setSelectedAnggota(e.target.value)}
-                className="w-full bg-[var(--bg)] border border-[var(--bord)] rounded-xl px-3 py-2.5 text-[11px] text-[var(--txt)] appearance-none"
-              >
+              <div style={{ fontSize: '9px', fontFamily: 'monospace', letterSpacing: '1px', textTransform: 'uppercase', color: '#A0B0A4', marginBottom: '6px' }}>Pilih Nama</div>
+              <select value={anggotaId} onChange={e => setAnggotaId(e.target.value)} style={{ width: '100%', background: '#FBF8F3', border: '1px solid #E2D9C8', borderRadius: '12px', padding: '11px 12px', fontSize: '12px', color: '#1C2B22', fontFamily: 'Nunito, sans-serif', outline: 'none' }}>
                 <option value="">Pilih namamu...</option>
-                {DUMMY_ANGGOTA.map(a => (
-                  <option key={a.id} value={a.id}>{a.nama}</option>
-                ))}
+                {anggota.map(a => <option key={a.id} value={a.id}>{a.nama}</option>)}
               </select>
             </div>
-
-            {/* Jumlah */}
             <div>
-              <label className="text-[9px] font-mono tracking-widest uppercase text-[var(--mut)] mb-1 block">
-                Jumlah Dibayar
-              </label>
-              <input
-                type="number"
-                value={jumlah}
-                onChange={e => setJumlah(e.target.value)}
-                className="w-full bg-[var(--bg)] border border-[var(--bord)] rounded-xl px-3 py-2.5 text-[13px] font-bold text-[var(--txt)] font-mono-num"
-              />
-              <p className="text-[9px] text-[var(--mut)] mt-1">
-                Minimal {formatRupiah(selectedTagihan?.nominal ?? 0)} · boleh lebih ✓
-              </p>
+              <div style={{ fontSize: '9px', fontFamily: 'monospace', letterSpacing: '1px', textTransform: 'uppercase', color: '#A0B0A4', marginBottom: '6px' }}>Jumlah Dibayar</div>
+              <input type="number" value={jumlah} onChange={e => setJumlah(e.target.value)} style={{ width: '100%', background: '#FBF8F3', border: '1px solid #E2D9C8', borderRadius: '12px', padding: '11px 12px', fontSize: '14px', fontWeight: 700, color: '#1C2B22', fontFamily: 'Space Grotesk, monospace', outline: 'none' }} />
+              <p style={{ fontSize: '9px', color: '#A0B0A4', marginTop: '4px' }}>Minimal {fmt(selected?.nominal || 0)} · boleh lebih ✓</p>
             </div>
-
-            {/* Upload Bukti */}
             <div>
-              <label className="text-[9px] font-mono tracking-widest uppercase text-[var(--mut)] mb-1 block">
-                Upload Bukti Transfer
-              </label>
-              <label className="flex flex-col items-center justify-center w-full h-24 border-2 border-dashed border-[var(--bord)] rounded-xl bg-[var(--bg)] cursor-pointer">
-                <input
-                  type="file"
-                  accept="image/*,.pdf"
-                  className="hidden"
-                  onChange={e => setFile(e.target.files?.[0] ?? null)}
-                />
+              <div style={{ fontSize: '9px', fontFamily: 'monospace', letterSpacing: '1px', textTransform: 'uppercase', color: '#A0B0A4', marginBottom: '6px' }}>Upload Bukti Transfer</div>
+              <label style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', width: '100%', height: '90px', border: '2px dashed #E2D9C8', borderRadius: '12px', background: '#FBF8F3', cursor: 'pointer' }}>
+                <input type="file" accept="image/*,.pdf" style={{ display: 'none' }} onChange={e => setFile(e.target.files?.[0] ?? null)} />
                 {file ? (
-                  <div className="text-center">
-                    <div className="text-[12px] font-bold text-[var(--acc)]">✓ {file.name}</div>
-                    <div className="text-[9px] text-[var(--mut)] mt-1">Tap untuk ganti</div>
+                  <div style={{ textAlign: 'center' }}>
+                    <div style={{ fontSize: '12px', fontWeight: 700, color: '#2E7D52' }}>✓ {file.name}</div>
+                    <div style={{ fontSize: '9px', color: '#A0B0A4', marginTop: '2px' }}>Tap untuk ganti</div>
                   </div>
                 ) : (
-                  <div className="text-center">
-                    <div className="text-lg mb-1">📎</div>
-                    <div className="text-[10px] text-[var(--mut)]">Tap untuk upload foto</div>
-                    <div className="text-[9px] text-[var(--mut)]">JPG, PNG, PDF maks. 5MB</div>
+                  <div style={{ textAlign: 'center' }}>
+                    <div style={{ fontSize: '20px', marginBottom: '4px' }}>📎</div>
+                    <div style={{ fontSize: '10px', color: '#A0B0A4' }}>Tap untuk upload foto</div>
+                    <div style={{ fontSize: '9px', color: '#A0B0A4' }}>JPG, PNG, PDF maks. 5MB</div>
                   </div>
                 )}
               </label>
             </div>
-
-            {/* Submit */}
-            <button
-              onClick={handleSubmit}
-              disabled={!selectedAnggota || !file || !jumlah}
-              className="w-full py-3 rounded-xl text-[13px] font-bold text-white bg-[var(--acc)] disabled:opacity-40 active:opacity-80 transition-opacity mt-1"
-            >
-              Submit Bukti Pembayaran
+            <button onClick={handleSubmit} disabled={!anggotaId || !file || !jumlah || submitting} style={{ width: '100%', padding: '13px', borderRadius: '12px', background: '#2E7D52', color: 'white', border: 'none', fontSize: '13px', fontWeight: 700, cursor: 'pointer', fontFamily: 'Nunito, sans-serif', opacity: (!anggotaId || !file || !jumlah || submitting) ? 0.5 : 1, transition: 'opacity 0.15s' }}>
+              {submitting ? 'Mengupload...' : 'Submit Bukti Pembayaran'}
             </button>
           </div>
         )}
