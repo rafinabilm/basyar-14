@@ -1,26 +1,183 @@
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Space+Grotesk:wght@500;700&display=swap');
+
 @import "tailwindcss";
 
+@theme {
+  --font-sans: 'Nunito', ui-rounded, sans-serif;
+  --font-mono: 'Space Grotesk', monospace;
+
+  --color-bg: #FBF8F3;
+  --color-surf: #F5F0E8;
+  --color-bord: #E2D9C8;
+  --color-txt: #1C2B22;
+  --color-sec: #5A6E5E;
+  --color-mut: #A0B0A4;
+  --color-acc: #2E7D52;
+  --color-acc2: #3D9968;
+  --color-acs: #D4EDDE;
+  --color-acsl: #EAF6EE;
+  --color-ok: #1E7B3A;
+  --color-warn: #B8860B;
+  --color-err: #C0392B;
+  --color-wh: #FFFFFF;
+
+  --radius-2xl: 14px;
+  --radius-3xl: 18px;
+}
+
+/* ─── CSS Variables (untuk glass card & inline styles) ─── */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --bg: #FBF8F3;
+  --surf: #F5F0E8;
+  --bord: #E2D9C8;
+  --txt: #1C2B22;
+  --sec: #5A6E5E;
+  --mut: #A0B0A4;
+  --acc: #2E7D52;
+  --acc2: #3D9968;
+  --acs: #D4EDDE;
+  --acsl: #EAF6EE;
+  --ok: #1E7B3A;
+  --warn: #B8860B;
+  --err: #C0392B;
+  --wh: #FFFFFF;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+/* ─── Base ─── */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  font-family: 'Nunito', ui-rounded, sans-serif;
+  background-color: var(--bg);
+  color: var(--txt);
+  -webkit-font-smoothing: antialiased;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  min-height: 100dvh;
+  background-color: var(--bg);
 }
+
+.font-mono-num {
+  font-family: 'Space Grotesk', monospace;
+}
+
+/* ─── Mobile container ─── */
+.mobile-container {
+  max-width: 430px;
+  margin: 0 auto;
+  min-height: 100dvh;
+  background-color: var(--bg);
+  position: relative;
+  overflow-x: hidden;
+}
+
+/* ─── Glass Card ─── */
+.glass-hero {
+  border-radius: 18px;
+  background: linear-gradient(135deg, #1a5c3a 0%, #2E7D52 50%, #3a9465 100%);
+  padding: 14px;
+  position: relative;
+  overflow: hidden;
+}
+
+.glass-hero::before {
+  content: '';
+  position: absolute;
+  top: -30px; right: -20px;
+  width: 110px; height: 110px;
+  background: rgba(255,255,255,0.06);
+  border-radius: 50%;
+}
+
+.glass-hero::after {
+  content: '';
+  position: absolute;
+  bottom: -20px; left: 10px;
+  width: 80px; height: 80px;
+  background: rgba(255,255,255,0.04);
+  border-radius: 50%;
+}
+
+.glass-panel {
+  background: rgba(255, 253, 248, 0.15);
+  border-radius: 12px;
+  padding: 14px;
+  border: 1px solid rgba(255,255,255,0.2);
+  position: relative;
+  z-index: 1;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.glass-divider {
+  height: 1px;
+  background: rgba(255,255,255,0.2);
+  margin: 10px 0;
+}
+
+/* ─── Bottom Sheet ─── */
+.bottom-sheet-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(28, 43, 34, 0.5);
+  z-index: 40;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+
+.bottom-sheet-overlay.open {
+  opacity: 1;
+  pointer-events: all;
+}
+
+.bottom-sheet {
+  position: fixed;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%) translateY(100%);
+  width: 100%;
+  max-width: 430px;
+  background: var(--wh);
+  border-radius: 24px 24px 0 0;
+  padding: 16px 20px 40px;
+  z-index: 50;
+  transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  max-height: 90dvh;
+  overflow-y: auto;
+}
+
+.bottom-sheet.open {
+  transform: translateX(-50%) translateY(0);
+}
+
+.sheet-handle {
+  width: 36px;
+  height: 4px;
+  background: var(--bord);
+  border-radius: 2px;
+  margin: 0 auto 16px;
+}
+
+/* ─── Scrollbar ─── */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: var(--surf); }
+::-webkit-scrollbar-thumb { background: var(--bord); border-radius: 2px; }
+
+/* ─── Animations ─── */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-in { animation: fadeInUp 0.4s ease forwards; }
+.delay-1 { animation-delay: 0.05s; opacity: 0; }
+.delay-2 { animation-delay: 0.10s; opacity: 0; }
+.delay-3 { animation-delay: 0.15s; opacity: 0; }
+.delay-4 { animation-delay: 0.20s; opacity: 0; }
+.delay-5 { animation-delay: 0.25s; opacity: 0; }
