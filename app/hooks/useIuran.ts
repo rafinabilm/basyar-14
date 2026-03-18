@@ -50,6 +50,24 @@ export function useTagihan() {
   return { tagihan, loading }
 }
 
+export function useAllTagihan() {
+  const [tagihan, setTagihan] = useState<Tagihan[]>([])
+  const [loading, setLoading] = useState(true)
+
+  async function fetch() {
+    const { data } = await supabase
+      .from('tagihan')
+      .select('*')
+      .order('created_at', { ascending: false })
+    setTagihan(data || [])
+    setLoading(false)
+  }
+
+  useEffect(() => { fetch() }, [])
+
+  return { tagihan, loading, refetch: fetch }
+}
+
 export function usePembayaranCount(tagihanId: string) {
   const [count, setCount] = useState(0)
   const [total, setTotal] = useState(0)

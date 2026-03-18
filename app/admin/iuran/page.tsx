@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { PageHeader } from '@/app/components/ui/PageHeader'
 import { Card } from '@/app/components/ui/Card'
-import { useAllPembayaran, verifikasiPembayaran } from '@/app/hooks/useIuran'
+import { useAllPembayaran, verifikasiPembayaran, useAllTagihan } from '@/app/hooks/useIuran'
 import { supabase } from '@/app/lib/supabase'
 
 function fmt(n: number) {
@@ -11,7 +11,10 @@ function fmt(n: number) {
 }
 
 export default function AdminIuranPage() {
-  const { pembayaran, loading, refetch } = useAllPembayaran()
+  const { pembayaran, loading: pembLoading, refetch: refetchPembayaran } = useAllPembayaran()
+  const { tagihan, loading: tagihanLoading, refetch: refetchTagihan } = useAllTagihan()
+  
+  const [tab, setTab] = useState<'pembayaran'|'tagihan'>('pembayaran')
   const [verifying, setVerifying] = useState<string | null>(null)
   const [showForm, setShowForm] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -29,7 +32,7 @@ export default function AdminIuranPage() {
     setVerifying(id)
     const { error } = await verifikasiPembayaran(id)
     if (error) alert('Gagal verifikasi: ' + error.message)
-    else refetch()
+    else refetchPembayaran()
     setVerifying(null)
   }
 
@@ -47,6 +50,8 @@ export default function AdminIuranPage() {
     if (error) { alert('Gagal: ' + error.message); return }
     setShowForm(false)
     setForm({ judul: '', nominal: '', tipe: 'rutin', batas_bayar: '', visibilitas: 'publik' })
+    refetchTagihan()
+    setTab('tagihan') // Pindah otomatis biar kelihatan
     alert('Tagihan berhasil ditambahkan!')
   }
 
@@ -60,6 +65,16 @@ export default function AdminIuranPage() {
       </div>
 
       <div style={{ padding: '0 16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+        {/* TAB Beli Navigasi */}
+        <div style={{ display: 'flex', gap: '8px', borderBottom: '1px solid #E2D9C8', paddingBottom: '2px', marginBottom: '4px' }}>
+          <button onClick={() => setTab('pembayaran')} style={{ flex: 1, padding: '8px', background: 'transparent', border: 'none', borderBottom: tab === 'pembayaran' ? '2px solid #2E7D52' : '2px solid transparent', color: tab === 'pembayaran' ? '#1C2B22' : '#A0B0A4', fontWeight: 700, fontSize: '12px', cursor: 'pointer', fontFamily: 'Nunito, sans-serif' }}>
+            Bukti Bayar {menunggu.length > 0 && <span style={{ background: '#C0392B', color: 'white', padding: '1px 5px', borderRadius: '10px', fontSize: '9px', marginLeft: '4px' }}>{menunggu.length}</span>}
+          </button>
+          <button onClick={() => setTab('tagihan')} style={{ flex: 1, padding: '8px', background: 'transparent', border: 'none', borderBottom: tab === 'tagihan' ? '2px solid #2E7D52' : '2px solid transparent', color: tab === 'tagihan' ? '#1C2B22' : '#A0B0A4', fontWeight: 700, fontSize: '12px', cursor: 'pointer', fontFamily: 'Nunito, sans-serif' }}>
+            Master Tagihan
+          </button>
+        </div>
+
         {/* Form Tambah Tagihan */}
         {showForm && (
           <Card style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
@@ -94,51 +109,86 @@ export default function AdminIuranPage() {
           </Card>
         )}
 
-        {menunggu.length > 0 && (
-          <div style={{ background: '#FFFBEB', border: '1px solid #E5C04A', borderRadius: '14px', padding: '12px 14px' }}>
-            <div style={{ fontSize: '12px', fontWeight: 700, color: '#B8860B' }}>⏳ {menunggu.length} Pembayaran Menunggu Verifikasi</div>
-          </div>
-        )}
+        {/* TAMPILAN TAB PEMBAYARAN */}
+        {tab === 'pembayaran' && (
+          <>
+            {menunggu.length > 0 && (
+              <div style={{ background: '#FFFBEB', border: '1px solid #E5C04A', borderRadius: '14px', padding: '12px 14px' }}>
+                <div style={{ fontSize: '12px', fontWeight: 700, color: '#B8860B' }}>⏳ {menunggu.length} Pembayaran Menunggu Verifikasi</div>
+              </div>
+            )}
 
-        {loading ? (
-          <div style={{ textAlign: 'center', padding: '32px', color: '#A0B0A4', fontSize: '12px' }}>Memuat...</div>
-        ) : pembayaran.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '32px', color: '#A0B0A4', fontSize: '12px' }}>Belum ada pembayaran masuk.</div>
-        ) : (
-          pembayaran.map(p => (
-            <Card key={p.id}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                <div>
-                  <div style={{ fontSize: '13px', fontWeight: 700, color: '#1C2B22' }}>{p.anggota?.nama || 'Anggota'}</div>
-                  <div style={{ fontSize: '10px', color: '#A0B0A4', marginTop: '2px' }}>{p.tagihan?.judul || 'Tagihan'}</div>
-                  <div style={{ fontSize: '14px', fontWeight: 700, color: '#2E7D52', fontFamily: 'Space Grotesk, monospace', marginTop: '4px' }}>
-                    {fmt(p.jumlah_bayar)}
-                    {p.tagihan && p.jumlah_bayar > p.tagihan.nominal && (
-                      <span style={{ fontSize: '10px', color: '#1E7B3A', marginLeft: '6px' }}>(+{fmt(p.jumlah_bayar - p.tagihan.nominal)})</span>
-                    )}
-                  </div>
-                  <div style={{ fontSize: '9px', color: '#A0B0A4', marginTop: '2px' }}>{new Date(p.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}</div>
-                </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', alignItems: 'flex-end' }}>
-                  <span style={{ fontSize: '9px', fontWeight: 700, padding: '3px 10px', borderRadius: '20px', background: p.status === 'menunggu' ? '#FFFBEB' : '#EAF7EE', color: p.status === 'menunggu' ? '#B8860B' : '#1E7B3A' }}>
-                    {p.status === 'menunggu' ? 'Menunggu' : 'Lunas'}
-                  </span>
-                  {p.status === 'menunggu' && (
-                    <div style={{ display: 'flex', gap: '6px' }}>
-                      <button onClick={() => handleVerifikasi(p.id)} disabled={verifying === p.id} style={{ fontSize: '10px', fontWeight: 700, background: '#EAF7EE', color: '#1E7B3A', border: 'none', padding: '5px 10px', borderRadius: '20px', cursor: 'pointer', fontFamily: 'Nunito, sans-serif', opacity: verifying === p.id ? 0.6 : 1 }}>
-                        {verifying === p.id ? '...' : '✓ Verif'}
-                      </button>
-                      {p.foto_bukti_url && (
-                        <a href={p.foto_bukti_url} target="_blank" rel="noreferrer" style={{ fontSize: '10px', fontWeight: 700, background: '#EAF6EE', color: '#2E7D52', padding: '5px 10px', borderRadius: '20px', textDecoration: 'none' }}>
-                          Bukti
-                        </a>
+            {pembLoading ? (
+              <div style={{ textAlign: 'center', padding: '32px', color: '#A0B0A4', fontSize: '12px' }}>Memuat...</div>
+            ) : pembayaran.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: '32px', color: '#A0B0A4', fontSize: '12px' }}>Belum ada pembayaran masuk.</div>
+            ) : (
+              pembayaran.map((p) => (
+                <Card key={p.id}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                    <div>
+                      <div style={{ fontSize: '13px', fontWeight: 700, color: '#1C2B22' }}>{p.anggota?.nama || 'Anggota'}</div>
+                      <div style={{ fontSize: '10px', color: '#A0B0A4', marginTop: '2px' }}>{p.tagihan?.judul || 'Tagihan'}</div>
+                      <div style={{ fontSize: '14px', fontWeight: 700, color: '#2E7D52', fontFamily: 'Space Grotesk, monospace', marginTop: '4px' }}>
+                        {fmt(p.jumlah_bayar)}
+                        {p.tagihan && p.jumlah_bayar > p.tagihan.nominal && (
+                          <span style={{ fontSize: '10px', color: '#1E7B3A', marginLeft: '6px' }}>(+{fmt(p.jumlah_bayar - p.tagihan.nominal)})</span>
+                        )}
+                      </div>
+                      <div style={{ fontSize: '9px', color: '#A0B0A4', marginTop: '2px' }}>{new Date(p.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}</div>
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', alignItems: 'flex-end' }}>
+                      <span style={{ fontSize: '9px', fontWeight: 700, padding: '3px 10px', borderRadius: '20px', background: p.status === 'menunggu' ? '#FFFBEB' : '#EAF7EE', color: p.status === 'menunggu' ? '#B8860B' : '#1E7B3A' }}>
+                        {p.status === 'menunggu' ? 'Menunggu' : 'Lunas'}
+                      </span>
+                      {p.status === 'menunggu' && (
+                        <div style={{ display: 'flex', gap: '6px' }}>
+                          <button onClick={() => handleVerifikasi(p.id)} disabled={verifying === p.id} style={{ fontSize: '10px', fontWeight: 700, background: '#EAF7EE', color: '#1E7B3A', border: 'none', padding: '5px 10px', borderRadius: '20px', cursor: 'pointer', fontFamily: 'Nunito, sans-serif', opacity: verifying === p.id ? 0.6 : 1 }}>
+                            {verifying === p.id ? '...' : '✓ Verif'}
+                          </button>
+                          {p.foto_bukti_url && (
+                            <a href={p.foto_bukti_url} target="_blank" rel="noreferrer" style={{ fontSize: '10px', fontWeight: 700, background: '#EAF6EE', color: '#2E7D52', padding: '5px 10px', borderRadius: '20px', textDecoration: 'none' }}>
+                              Bukti
+                            </a>
+                          )}
+                        </div>
                       )}
                     </div>
-                  )}
-                </div>
-              </div>
-            </Card>
-          ))
+                  </div>
+                </Card>
+              ))
+            )}
+          </>
+        )}
+
+        {/* TAMPILAN TAB TAGIHAN */}
+        {tab === 'tagihan' && (
+          <>
+            {tagihanLoading ? (
+               <div style={{ textAlign: 'center', padding: '32px', color: '#A0B0A4', fontSize: '12px' }}>Memuat data tagihan...</div>
+            ) : tagihan.length === 0 ? (
+               <div style={{ textAlign: 'center', padding: '32px', color: '#A0B0A4', fontSize: '12px' }}>Belum ada master tagihan yang dibuat. Tekan tombol + Tagihan di atas.</div>
+            ) : (
+               tagihan.map(t => (
+                 <Card key={t.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                   <div>
+                     <div style={{ fontSize: '13px', fontWeight: 700, color: '#1C2B22' }}>{t.judul}</div>
+                     <div style={{ display: 'flex', gap: '6px', marginTop: '4px' }}>
+                        <span style={{ fontSize: '9px', background: '#F5F0E8', color: '#5A6E5E', padding: '2px 8px', borderRadius: '20px', fontWeight: 700 }}>
+                          {t.tipe === 'rutin' ? 'Rutin' : 'Sekali'}
+                        </span>
+                        <span style={{ fontSize: '9px', background: t.visibilitas === 'publik' ? '#EAF7EE' : '#FEE2E2', color: t.visibilitas === 'publik' ? '#1E7B3A' : '#C0392B', padding: '2px 8px', borderRadius: '20px', fontWeight: 700 }}>
+                          {t.visibilitas === 'publik' ? 'Vis: Publik' : 'Vis: Privat'}
+                        </span>
+                     </div>
+                   </div>
+                   <div style={{ fontSize: '14px', fontWeight: 700, color: '#2E7D52', fontFamily: 'Space Grotesk, monospace' }}>
+                     {fmt(t.nominal)}
+                   </div>
+                 </Card>
+               ))
+            )}
+          </>
         )}
       </div>
     </main>
