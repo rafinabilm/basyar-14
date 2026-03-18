@@ -25,6 +25,7 @@ export default function AdminIuranPage() {
     batas_bayar: '',
     visibilitas: 'publik',
   })
+  const [editId, setEditId] = useState<string | null>(null)
 
   const menunggu = pembayaran.filter(p => p.status === 'menunggu')
 
@@ -36,30 +37,76 @@ export default function AdminIuranPage() {
     setVerifying(null)
   }
 
-  async function handleTambahTagihan() {
+  function handleTutupForm() {
+    setShowForm(false)
+    setEditId(null)
+    setForm({ judul: '', nominal: '', tipe: 'rutin', batas_bayar: '', visibilitas: 'publik' })
+  }
+
+  function handleEditTagihan(t: any) {
+    setForm({
+      judul: t.judul,
+      nominal: t.nominal.toString(),
+      tipe: t.tipe,
+      batas_bayar: t.batas_bayar || '',
+      visibilitas: t.visibilitas,
+    })
+    setEditId(t.id)
+    setShowForm(true)
+    setTab('tagihan')
+  }
+
+  async function handleHapusTagihan(t: any) {
+    if (!confirm(`Hapus tagihan "${t.judul}"?\n\nPerhatian: Jika sudah ada yang mentransfer untuk tagihan ini, tagihan tidak bisa dihapus.`)) return
+    
+    // Optimistic / Simple Delete
+    const { error } = await supabase.from('tagihan').delete().eq('id', t.id)
+    if (error) {
+      alert('Gagal menghapus tagihan. Pastikan tidak ada pembayaran pada tagihan ini (Anda bisa mengarsipkan/menutup dengan mengganti ke Visibilitas Privat).')
+    } else {
+      refetchTagihan()
+      alert('Tagihan terhapus!')
+    }
+  }
+
+  async function handleSimpanTagihan() {
     if (!form.judul || !form.nominal) return
     setSaving(true)
-    const { error } = await supabase.from('tagihan').insert([{
-      judul: form.judul,
-      nominal: parseInt(form.nominal),
-      tipe: form.tipe,
-      batas_bayar: form.batas_bayar || null,
-      visibilitas: form.visibilitas,
-    }])
+    
+    let error;
+    if (editId) {
+      const res = await supabase.from('tagihan').update({
+        judul: form.judul,
+        nominal: parseInt(form.nominal),
+        tipe: form.tipe,
+        batas_bayar: form.batas_bayar || null,
+        visibilitas: form.visibilitas,
+      }).eq('id', editId)
+      error = res.error
+    } else {
+      const res = await supabase.from('tagihan').insert([{
+        judul: form.judul,
+        nominal: parseInt(form.nominal),
+        tipe: form.tipe,
+        batas_bayar: form.batas_bayar || null,
+        visibilitas: form.visibilitas,
+      }])
+      error = res.error
+    }
+
     setSaving(false)
     if (error) { alert('Gagal: ' + error.message); return }
-    setShowForm(false)
-    setForm({ judul: '', nominal: '', tipe: 'rutin', batas_bayar: '', visibilitas: 'publik' })
+    handleTutupForm()
     refetchTagihan()
     setTab('tagihan') // Pindah otomatis biar kelihatan
-    alert('Tagihan berhasil ditambahkan!')
+    alert(editId ? 'Tagihan berhasil diupdate!' : 'Tagihan berhasil ditambahkan!')
   }
 
   return (
     <main style={{ paddingBottom: '100px' }}>
       <div style={{ padding: '20px 16px 8px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
         <PageHeader title="Kelola Iuran" />
-        <button onClick={() => setShowForm(!showForm)} style={{ background: '#2E7D52', color: 'white', border: 'none', borderRadius: '20px', padding: '8px 16px', fontSize: '11px', fontWeight: 700, cursor: 'pointer', fontFamily: 'Nunito, sans-serif', flexShrink: 0 }}>
+        <button onClick={() => showForm ? handleTutupForm() : setShowForm(true)} style={{ background: '#2E7D52', color: 'white', border: 'none', borderRadius: '20px', padding: '8px 16px', fontSize: '11px', fontWeight: 700, cursor: 'pointer', fontFamily: 'Nunito, sans-serif', flexShrink: 0 }}>
           {showForm ? '× Tutup' : '+ Tagihan'}
         </button>
       </div>
@@ -78,7 +125,7 @@ export default function AdminIuranPage() {
         {/* Form Tambah Tagihan */}
         {showForm && (
           <Card style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-            <div style={{ fontSize: '14px', fontWeight: 700, color: '#1C2B22' }}>Tambah Tagihan Baru</div>
+            <div style={{ fontSize: '14px', fontWeight: 700, color: '#1C2B22' }}>{editId ? 'Edit Tagihan' : 'Tambah Tagihan Baru'}</div>
             {[
               { label: 'Judul Tagihan', key: 'judul', type: 'text', placeholder: 'Iuran Bulan Maret' },
               { label: 'Nominal (Rp)', key: 'nominal', type: 'number', placeholder: '50000' },
@@ -100,11 +147,11 @@ export default function AdminIuranPage() {
               <div style={{ fontSize: '9px', fontFamily: 'monospace', letterSpacing: '1px', textTransform: 'uppercase', color: '#A0B0A4', marginBottom: '5px' }}>Visibilitas</div>
               <select value={form.visibilitas} onChange={e => setForm(p => ({ ...p, visibilitas: e.target.value }))} style={{ width: '100%', background: '#FBF8F3', border: '1px solid #E2D9C8', borderRadius: '10px', padding: '10px 12px', fontSize: '12px', color: '#1C2B22', fontFamily: 'Nunito, sans-serif', outline: 'none' }}>
                 <option value="publik">Publik</option>
-                <option value="privat">Privat (hanya admin)</option>
+                <option value="privat">Privat (Hanya Admin / Tutup Tagihan)</option>
               </select>
             </div>
-            <button onClick={handleTambahTagihan} disabled={saving || !form.judul || !form.nominal} style={{ width: '100%', padding: '12px', borderRadius: '12px', background: '#2E7D52', color: 'white', border: 'none', fontSize: '13px', fontWeight: 700, cursor: 'pointer', fontFamily: 'Nunito, sans-serif', opacity: (saving || !form.judul || !form.nominal) ? 0.5 : 1 }}>
-              {saving ? 'Menyimpan...' : 'Simpan Tagihan'}
+            <button onClick={handleSimpanTagihan} disabled={saving || !form.judul || !form.nominal} style={{ width: '100%', padding: '12px', borderRadius: '12px', background: '#2E7D52', color: 'white', border: 'none', fontSize: '13px', fontWeight: 700, cursor: 'pointer', fontFamily: 'Nunito, sans-serif', opacity: (saving || !form.judul || !form.nominal) ? 0.5 : 1 }}>
+              {saving ? 'Menyimpan...' : (editId ? 'Simpan Perubahan' : 'Simpan Tagihan Baru')}
             </button>
           </Card>
         )}
@@ -182,8 +229,14 @@ export default function AdminIuranPage() {
                         </span>
                      </div>
                    </div>
-                   <div style={{ fontSize: '14px', fontWeight: 700, color: '#2E7D52', fontFamily: 'Space Grotesk, monospace' }}>
-                     {fmt(t.nominal)}
+                   <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '8px' }}>
+                     <div style={{ fontSize: '14px', fontWeight: 700, color: '#2E7D52', fontFamily: 'Space Grotesk, monospace' }}>
+                       {fmt(t.nominal)}
+                     </div>
+                     <div style={{ display: 'flex', gap: '4px' }}>
+                       <button onClick={() => handleEditTagihan(t)} style={{ background: '#EAF6EE', color: '#2E7D52', border: 'none', padding: '4px 8px', borderRadius: '12px', fontSize: '9px', fontWeight: 700, cursor: 'pointer' }}>Edit</button>
+                       <button onClick={() => handleHapusTagihan(t)} style={{ background: '#FEE2E2', color: '#C0392B', border: 'none', padding: '4px 8px', borderRadius: '12px', fontSize: '9px', fontWeight: 700, cursor: 'pointer' }}>Hapus</button>
+                     </div>
                    </div>
                  </Card>
                ))

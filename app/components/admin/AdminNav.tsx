@@ -72,7 +72,10 @@ export function AdminNav() {
       {/* Admin Banner */}
       <div style={{ background: '#2E7D52', padding: '6px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <span style={{ fontSize: '9px', fontFamily: 'monospace', color: 'white', letterSpacing: '1.5px', textTransform: 'uppercase' }}>⚙ Admin Mode</span>
-        <Link href="/admin/settings" style={{ fontSize: '9px', color: 'rgba(255,255,255,0.7)', textDecoration: 'none', fontFamily: 'monospace' }}>Settings</Link>
+        <div style={{ display: 'flex', gap: '12px' }}>
+          <Link href="/" target="_blank" style={{ fontSize: '9px', color: 'rgba(255,255,255,0.7)', textDecoration: 'none', fontFamily: 'monospace' }}>Web Publik ↗</Link>
+          <Link href="/admin/settings" style={{ fontSize: '9px', color: 'rgba(255,255,255,0.7)', textDecoration: 'none', fontFamily: 'monospace' }}>Settings</Link>
+        </div>
       </div>
 
       {/* Bottom Nav */}
