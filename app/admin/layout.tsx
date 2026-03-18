@@ -12,17 +12,36 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const isLoginPage = pathname === '/admin/login'
 
   useEffect(() => {
-    if (isLoginPage) { setLoading(false); return }
+    if (isLoginPage) {
+      setLoading(false)
+      return
+    }
+
     supabase.auth.getSession().then(({ data }) => {
-      if (!data.session) router.push('/admin/login')
-      else setLoading(false)
+      if (!data.session) {
+        router.push('/admin/login')
+      } else {
+        setLoading(false)
+      }
     })
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_IN' && session) {
+        setLoading(false)
+      }
+      if (event === 'SIGNED_OUT') {
+        router.push('/admin/login')
+      }
+    })
+
+    return () => subscription.unsubscribe()
   }, [isLoginPage, router])
 
   if (loading && !isLoginPage) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[var(--bg)]">
-        <div className="w-8 h-8 border-2 border-[var(--acc)] border-t-transparent rounded-full animate-spin" />
+      <div style={{ minHeight: '100dvh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#FBF8F3' }}>
+        <div style={{ width: '32px', height: '32px', border: '2px solid #2E7D52', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+        <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
       </div>
     )
   }
