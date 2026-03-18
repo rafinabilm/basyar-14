@@ -2,6 +2,8 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { useEffect, useState } from 'react'
+import { supabase } from '@/app/lib/supabase'
 
 const NAV_ITEMS = [
   {
@@ -26,7 +28,7 @@ const NAV_ITEMS = [
   {
     href: '/admin/iuran',
     label: 'Iuran',
-    badge: true,
+    showBadge: true,
     icon: (active: boolean) => (
       <svg viewBox="0 0 24 24" fill="none" stroke={active ? '#2E7D52' : '#A0B0A4'} style={{ width: '20px', height: '20px' }} strokeWidth={2}>
         <line x1="12" y1="1" x2="12" y2="23" />
@@ -49,6 +51,15 @@ const LAINNYA_PATHS = ['/admin/anggota', '/admin/event', '/admin/galeri', '/admi
 
 export function AdminNav() {
   const pathname = usePathname()
+  const [pendingCount, setPendingCount] = useState(0)
+
+  useEffect(() => {
+    supabase
+      .from('pembayaran_iuran')
+      .select('id', { count: 'exact' })
+      .eq('status', 'menunggu')
+      .then(({ count }) => setPendingCount(count || 0))
+  }, [])
 
   const isActive = (href: string) => {
     if (href === '/admin/anggota') return LAINNYA_PATHS.includes(pathname)
@@ -69,11 +80,14 @@ export function AdminNav() {
         <div style={{ display: 'flex', justifyContent: 'space-around', alignItems: 'center', padding: '8px 4px 20px' }}>
           {NAV_ITEMS.map((item) => {
             const active = isActive(item.href)
+            const badgeNum = item.showBadge ? pendingCount : 0
             return (
               <Link key={item.href} href={item.href} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '3px', padding: '4px 12px', borderRadius: '10px', textDecoration: 'none', background: active ? '#EAF6EE' : 'transparent', position: 'relative' }}>
                 {item.icon(active)}
-                {item.badge && (
-                  <div style={{ position: 'absolute', top: '2px', right: '8px', width: '10px', height: '10px', background: '#C0392B', borderRadius: '50%', border: '1.5px solid white', fontSize: '6px', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700 }}>3</div>
+                {badgeNum > 0 && (
+                  <div style={{ position: 'absolute', top: '2px', right: '8px', minWidth: '14px', height: '14px', background: '#C0392B', borderRadius: '7px', border: '1.5px solid white', fontSize: '7px', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, padding: '0 2px' }}>
+                    {badgeNum > 9 ? '9+' : badgeNum}
+                  </div>
                 )}
                 <span style={{ fontSize: '8px', fontWeight: 700, color: active ? '#2E7D52' : '#A0B0A4', fontFamily: 'Nunito, sans-serif' }}>{item.label}</span>
               </Link>

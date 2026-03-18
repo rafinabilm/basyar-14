@@ -54,7 +54,7 @@ export default function EventPage() {
                         <div style={{ flex: 1 }}>
                           <div style={{ fontSize: '13px', fontWeight: 700, color: '#1C2B22' }}>{e.nama_event}</div>
                           {e.lokasi && <div style={{ fontSize: '9px', color: '#A0B0A4' }}>📍 {e.lokasi}</div>}
-                          <Pill label="Upcoming" variant="green" className="mt-1" />
+                          <Pill label="Upcoming" variant="green" styleOverride={{ marginTop: '4px' }} />
                         </div>
                         {days >= 0 && (
                           <span style={{ fontSize: '9px', fontWeight: 700, color: 'white', background: '#2E7D52', padding: '3px 8px', borderRadius: '20px', fontFamily: 'Space Grotesk, monospace', flexShrink: 0 }}>

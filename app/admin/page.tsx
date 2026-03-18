@@ -1,11 +1,23 @@
-import Link from 'next/link'
+'use client'
 
-const STATS = [
-  { label: 'Total Anggota', value: '47', unit: 'orang', progress: null },
-  { label: 'Saldo Kas', value: '1,25jt', unit: 'rupiah', progress: null },
-  { label: 'Lunas Iuran', value: '32', unit: '/47', progress: 68 },
-  { label: 'Event Aktif', value: '2', unit: 'upcoming', progress: null },
-]
+import { useEffect, useState } from 'react'
+import Link from 'next/link'
+import { supabase } from '@/app/lib/supabase'
+
+interface DashboardStats {
+  totalAnggota: number
+  saldoKas: number
+  lunasiuran: number
+  totalTagihanAktif: number
+  eventAktif: number
+  pendingVerifikasi: number
+}
+
+function fmtKas(n: number): string {
+  if (n >= 1_000_000) return (n / 1_000_000).toFixed(2).replace('.', ',') + 'jt'
+  if (n >= 1_000) return (n / 1_000).toFixed(0) + 'rb'
+  return String(n)
+}
 
 const QUICK_ACTIONS = [
   { label: 'Tambah Transaksi', href: '/admin/kas', icon: '+' },
@@ -15,6 +27,62 @@ const QUICK_ACTIONS = [
 ]
 
 export default function AdminDashboardPage() {
+  const [stats, setStats] = useState<DashboardStats>({
+    totalAnggota: 0,
+    saldoKas: 0,
+    lunasiuran: 0,
+    totalTagihanAktif: 0,
+    eventAktif: 0,
+    pendingVerifikasi: 0,
+  })
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    async function loadStats() {
+      const [
+        { count: anggotaCount },
+        { data: kasData },
+        { count: lunasCount },
+        { count: totalAnggotaForIuran },
+        { data: events },
+        { count: pendingCount },
+      ] = await Promise.all([
+        supabase.from('anggota').select('id', { count: 'exact' }),
+        supabase.from('transaksi_kas').select('jenis, jumlah'),
+        supabase.from('pembayaran_iuran').select('id', { count: 'exact' }).eq('status', 'lunas'),
+        supabase.from('anggota').select('id', { count: 'exact' }),
+        supabase.from('event').select('tanggal').gte('tanggal', new Date().toISOString().split('T')[0]),
+        supabase.from('pembayaran_iuran').select('id', { count: 'exact' }).eq('status', 'menunggu'),
+      ])
+
+      const saldo = (kasData || []).reduce((acc: number, t: any) =>
+        t.jenis === 'pemasukan' ? acc + t.jumlah : acc - t.jumlah, 0)
+
+      setStats({
+        totalAnggota: anggotaCount || 0,
+        saldoKas: saldo,
+        lunasiuran: lunasCount || 0,
+        totalTagihanAktif: totalAnggotaForIuran || 0,
+        eventAktif: (events || []).length,
+        pendingVerifikasi: pendingCount || 0,
+      })
+      setLoading(false)
+    }
+    loadStats()
+  }, [])
+
+  const STATS = [
+    { label: 'Total Anggota', value: loading ? '...' : String(stats.totalAnggota), unit: 'orang', progress: null },
+    { label: 'Saldo Kas', value: loading ? '...' : fmtKas(stats.saldoKas), unit: 'rupiah', progress: null },
+    {
+      label: 'Lunas Iuran',
+      value: loading ? '...' : String(stats.lunasiuran),
+      unit: `/${stats.totalAnggota}`,
+      progress: stats.totalAnggota > 0 ? Math.round((stats.lunasiuran / stats.totalAnggota) * 100) : 0,
+    },
+    { label: 'Event Aktif', value: loading ? '...' : String(stats.eventAktif), unit: 'upcoming', progress: null },
+  ]
+
   return (
     <main style={{ paddingBottom: '100px' }}>
       <div style={{ padding: '20px 16px 8px' }}>
@@ -23,23 +91,29 @@ export default function AdminDashboardPage() {
             <p style={{ fontSize: '9px', fontFamily: 'monospace', letterSpacing: '1px', textTransform: 'uppercase', color: '#2E7D52' }}>Admin Panel</p>
             <h1 style={{ fontSize: '26px', fontWeight: 800, color: '#1C2B22', letterSpacing: '-0.5px', lineHeight: 1.1 }}>Dashboard</h1>
           </div>
-          <span style={{ fontSize: '10px', fontWeight: 700, color: '#C0392B', background: '#FEE2E2', padding: '4px 10px', borderRadius: '20px' }}>3 perlu aksi</span>
+          {!loading && stats.pendingVerifikasi > 0 && (
+            <span style={{ fontSize: '10px', fontWeight: 700, color: '#C0392B', background: '#FEE2E2', padding: '4px 10px', borderRadius: '20px' }}>
+              {stats.pendingVerifikasi} perlu aksi
+            </span>
+          )}
         </div>
       </div>
 
       <div style={{ padding: '0 16px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
         {/* Alert */}
-        <Link href="/admin/iuran" style={{ textDecoration: 'none' }}>
-          <div style={{ background: '#FFFBEB', border: '1px solid #E5C04A', borderRadius: '14px', padding: '12px 14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <div>
-              <div style={{ fontSize: '12px', fontWeight: 700, color: '#B8860B' }}>⏳ 3 Pembayaran Menunggu Verifikasi</div>
-              <div style={{ fontSize: '10px', color: '#5A6E5E', marginTop: '2px' }}>Tap untuk review →</div>
+        {!loading && stats.pendingVerifikasi > 0 && (
+          <Link href="/admin/iuran" style={{ textDecoration: 'none' }}>
+            <div style={{ background: '#FFFBEB', border: '1px solid #E5C04A', borderRadius: '14px', padding: '12px 14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <div style={{ fontSize: '12px', fontWeight: 700, color: '#B8860B' }}>⏳ {stats.pendingVerifikasi} Pembayaran Menunggu Verifikasi</div>
+                <div style={{ fontSize: '10px', color: '#5A6E5E', marginTop: '2px' }}>Tap untuk review →</div>
+              </div>
+              <svg viewBox="0 0 24 24" fill="none" stroke="#B8860B" style={{ width: '16px', height: '16px', flexShrink: 0 }} strokeWidth={2}>
+                <polyline points="9 18 15 12 9 6" />
+              </svg>
             </div>
-            <svg viewBox="0 0 24 24" fill="none" stroke="#B8860B" style={{ width: '16px', height: '16px', flexShrink: 0 }} strokeWidth={2}>
-              <polyline points="9 18 15 12 9 6" />
-            </svg>
-          </div>
-        </Link>
+          </Link>
+        )}
 
         {/* Stats Grid */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
@@ -50,7 +124,7 @@ export default function AdminDashboardPage() {
                 {s.value}
                 <span style={{ fontSize: '11px', color: '#A0B0A4', fontFamily: 'Nunito, sans-serif', marginLeft: '3px' }}>{s.unit}</span>
               </div>
-              {s.progress && (
+              {s.progress !== null && (
                 <div style={{ height: '4px', background: '#E2D9C8', borderRadius: '2px', marginTop: '8px', overflow: 'hidden' }}>
                   <div style={{ height: '100%', width: `${s.progress}%`, background: '#2E7D52', borderRadius: '2px' }} />
                 </div>

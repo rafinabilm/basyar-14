@@ -9,8 +9,16 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 )
 
-const BAR_HEIGHTS = [30, 48, 36, 58, 40, 64, 50]
-const BAR_LABELS = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul']
+const MONTH_LABELS = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des']
+
+const MOMEN_COLORS = [
+  'linear-gradient(135deg, #D4EDDE, #A8C4B0)',
+  'linear-gradient(135deg, #C8DDD0, #8FBA9F)',
+  'linear-gradient(135deg, #b8d4c0, #7eaa8e)',
+  'linear-gradient(135deg, #E2D9C8, #C8DDD0)',
+  'linear-gradient(135deg, #D4EDDE, #8FBA9F)',
+  'linear-gradient(135deg, #F5F0E8, #C8DDD0)',
+]
 
 function fmt(n: number) {
   return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(Math.abs(n))
@@ -23,27 +31,38 @@ function getDaysUntil(dateStr: string): number {
   return diff
 }
 
-const MOMEN_COLORS = [
-  'linear-gradient(135deg, #D4EDDE, #A8C4B0)',
-  'linear-gradient(135deg, #C8DDD0, #8FBA9F)',
-  'linear-gradient(135deg, #b8d4c0, #7eaa8e)',
-  'linear-gradient(135deg, #E2D9C8, #C8DDD0)',
-  'linear-gradient(135deg, #D4EDDE, #8FBA9F)',
-  'linear-gradient(135deg, #F5F0E8, #C8DDD0)',
-]
-
 export const revalidate = 60
 
 export default async function HomePage() {
-  const [transaksiRes, eventRes, fotoRes] = await Promise.all([
+  const currentYear = new Date().getFullYear()
+  const currentMonth = new Date().getMonth() // 0-indexed
+
+  const [transaksiRes, eventRes, fotoRes, kasChartRes] = await Promise.all([
     supabase.from('transaksi_kas').select('*').order('tanggal', { ascending: false }),
     supabase.from('event').select('*').order('tanggal', { ascending: true }).gte('tanggal', new Date().toISOString().split('T')[0]).limit(1),
     supabase.from('galeri_foto').select('*').order('created_at', { ascending: false }).limit(6),
+    supabase.from('transaksi_kas').select('tanggal, jenis, jumlah').gte('tanggal', `${currentYear}-01-01`).lte('tanggal', `${currentYear}-12-31`),
   ])
 
   const transaksi = transaksiRes.data || []
   const events = eventRes.data || []
   const fotos = fotoRes.data || []
+  const kasChart = kasChartRes.data || []
+
+  // Hitung saldo per bulan (net = masuk - keluar)
+  const monthlyNet: number[] = Array(12).fill(0)
+  for (const t of kasChart) {
+    const m = new Date(t.tanggal).getMonth()
+    if (t.jenis === 'pemasukan') monthlyNet[m] += t.jumlah
+    else monthlyNet[m] -= t.jumlah
+  }
+
+  // Ambil hanya bulan yang relevan (sampai bulan ini)
+  const relevantMonths = monthlyNet.slice(0, currentMonth + 1)
+  const maxVal = Math.max(...relevantMonths.map(Math.abs), 1)
+  const MAX_BAR = 64
+  const barHeights = relevantMonths.map(v => Math.max(4, Math.round((Math.abs(v) / maxVal) * MAX_BAR)))
+  const barLabels = MONTH_LABELS.slice(0, currentMonth + 1)
 
   const saldo = transaksi.reduce((acc: number, t: any) => t.jenis === 'pemasukan' ? acc + t.jumlah : acc - t.jumlah, 0)
   const totalMasuk = transaksi.filter((t: any) => t.jenis === 'pemasukan').reduce((acc: number, t: any) => acc + t.jumlah, 0)
@@ -60,34 +79,52 @@ export default async function HomePage() {
             <h1 style={{ fontSize: '26px', fontWeight: 800, color: '#1C2B22', letterSpacing: '-0.5px', lineHeight: 1.1 }}>Basyar-14</h1>
             <p style={{ fontSize: '11px', color: '#A0B0A4', fontStyle: 'italic', marginTop: '2px' }}>PP Al-Hamid</p>
           </div>
-          <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: '#EAF6EE', border: '1px solid #D4EDDE', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <svg viewBox="0 0 24 24" fill="none" stroke="#2E7D52" style={{ width: '16px', height: '16px' }} strokeWidth={2}>
-              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
-              <path d="M13.73 21a2 2 0 0 1-3.46 0" />
-            </svg>
-          </div>
+          <Link href="/iuran" style={{ textDecoration: 'none' }}>
+            <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: '#EAF6EE', border: '1px solid #D4EDDE', display: 'flex', alignItems: 'center', justifyContent: 'center' }} title="Bayar Iuran">
+              <svg viewBox="0 0 24 24" fill="none" stroke="#2E7D52" style={{ width: '16px', height: '16px' }} strokeWidth={2}>
+                <line x1="12" y1="1" x2="12" y2="23" />
+                <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+              </svg>
+            </div>
+          </Link>
         </div>
       </div>
 
       <div style={{ padding: '0 16px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
         <SaldoCard saldo={saldo} masuk={totalMasuk} keluar={totalKeluar} />
 
-        {/* Chart */}
+        {/* Chart — data real per bulan tahun ini */}
         <Card>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
             <span style={{ fontSize: '9px', fontFamily: 'monospace', letterSpacing: '1px', textTransform: 'uppercase', color: '#A0B0A4' }}>Kas per Bulan</span>
-            <span style={{ fontSize: '9px', fontWeight: 700, color: '#2E7D52', fontFamily: 'monospace' }}>2025</span>
+            <span style={{ fontSize: '9px', fontWeight: 700, color: '#2E7D52', fontFamily: 'monospace' }}>{currentYear}</span>
           </div>
-          <div style={{ display: 'flex', alignItems: 'flex-end', gap: '3px', height: '48px' }}>
-            {BAR_HEIGHTS.map((h, i) => (
-              <div key={i} style={{ flex: 1, height: `${h}px`, borderRadius: '3px 3px 0 0', background: i === 5 ? '#2E7D52' : '#E2D9C8' }} />
-            ))}
-          </div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '4px' }}>
-            {BAR_LABELS.map((m, i) => (
-              <span key={m} style={{ flex: 1, textAlign: 'center', fontSize: '7px', fontFamily: 'monospace', color: i === 5 ? '#2E7D52' : '#A0B0A4', fontWeight: i === 5 ? 700 : 400 }}>{m}</span>
-            ))}
-          </div>
+          {barHeights.length === 0 || barHeights.every(h => h <= 4) ? (
+            <div style={{ textAlign: 'center', padding: '16px 0', fontSize: '11px', color: '#A0B0A4' }}>Belum ada transaksi tahun ini</div>
+          ) : (
+            <>
+              <div style={{ display: 'flex', alignItems: 'flex-end', gap: '3px', height: '64px' }}>
+                {barHeights.map((h, i) => (
+                  <div
+                    key={i}
+                    style={{
+                      flex: 1,
+                      height: `${h}px`,
+                      borderRadius: '3px 3px 0 0',
+                      background: i === currentMonth ? '#2E7D52' : (monthlyNet[i] < 0 ? '#FFB3A7' : '#E2D9C8'),
+                      transition: 'height 0.3s',
+                    }}
+                    title={`${barLabels[i]}: ${monthlyNet[i] >= 0 ? '+' : ''}${fmt(monthlyNet[i])}`}
+                  />
+                ))}
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '4px' }}>
+                {barLabels.map((m, i) => (
+                  <span key={m} style={{ flex: 1, textAlign: 'center', fontSize: '7px', fontFamily: 'monospace', color: i === currentMonth ? '#2E7D52' : '#A0B0A4', fontWeight: i === currentMonth ? 700 : 400 }}>{m}</span>
+                ))}
+              </div>
+            </>
+          )}
         </Card>
 
         {/* Transaksi */}

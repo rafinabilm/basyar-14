@@ -1,21 +1,20 @@
 interface PillProps {
   label: string
   variant?: 'green' | 'accent' | 'warn' | 'err' | 'muted'
-  className?: string
+  styleOverride?: React.CSSProperties
 }
 
 const STYLES = {
-  green:  { background: '#EAF7EE', color: '#1E7B3A' },
+  green: { background: '#EAF7EE', color: '#1E7B3A' },
   accent: { background: '#EAF6EE', color: '#2E7D52' },
-  warn:   { background: '#FFFBEB', color: '#B8860B' },
-  err:    { background: '#FEE2E2', color: '#C0392B' },
-  muted:  { background: '#F5F0E8', color: '#5A6E5E' },
+  warn: { background: '#FFFBEB', color: '#B8860B' },
+  err: { background: '#FEE2E2', color: '#C0392B' },
+  muted: { background: '#F5F0E8', color: '#5A6E5E' },
 }
 
-export function Pill({ label, variant = 'accent', className = '' }: PillProps) {
+export function Pill({ label, variant = 'accent', styleOverride = {} }: PillProps) {
   return (
     <span
-      className={className}
       style={{
         display: 'inline-block',
         fontSize: '9px',
@@ -24,6 +23,7 @@ export function Pill({ label, variant = 'accent', className = '' }: PillProps) {
         borderRadius: '20px',
         fontFamily: 'Nunito, sans-serif',
         ...STYLES[variant],
+        ...styleOverride,
       }}
     >
       {label}
