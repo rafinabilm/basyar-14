@@ -9,6 +9,7 @@ import { EmptyState } from '@/app/components/ui/EmptyState'
 import { PageHeader } from '@/app/components/ui/PageHeader'
 import { useTagihan, useAnggota, usePembayaranCount, submitPembayaran } from '@/app/hooks/useIuran'
 import { uploadFile } from '@/app/hooks/useUpload'
+import { useDialog } from '@/app/providers/DialogProvider'
 
 function fmt(n: number) {
   return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(n)
@@ -47,6 +48,7 @@ function TagihanCard({ tagihan, onBayar }: { tagihan: any, onBayar: (t: any) => 
 export default function IuranPage() {
   const { tagihan, loading } = useTagihan()
   const { anggota } = useAnggota()
+  const { showAlert } = useDialog()
   const [selected, setSelected] = useState<any>(null)
   const [anggotaId, setAnggotaId] = useState('')
   const [jumlah, setJumlah] = useState('')
@@ -67,7 +69,7 @@ export default function IuranPage() {
     setSubmitting(true)
 
     const url = await uploadFile(file, 'basyar14/iuran')
-    if (!url) { setSubmitting(false); alert('Gagal upload foto'); return }
+    if (!url) { setSubmitting(false); showAlert('Gagal upload foto'); return }
 
     const { error } = await submitPembayaran({
       anggota_id: anggotaId,
@@ -77,7 +79,7 @@ export default function IuranPage() {
     })
 
     setSubmitting(false)
-    if (error) { alert('Gagal submit: ' + error.message); return }
+    if (error) { showAlert('Gagal submit: ' + error.message); return }
     setSubmitted(true)
     setTimeout(() => setSelected(null), 2000)
   }

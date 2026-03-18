@@ -5,9 +5,11 @@ import { PageHeader } from '@/app/components/ui/PageHeader'
 import { Card } from '@/app/components/ui/Card'
 import { useEvents, useFotoByEvent, insertFoto, hapusFoto } from '@/app/hooks/useGaleri'
 import { uploadFile } from '@/app/hooks/useUpload'
+import { useDialog } from '@/app/providers/DialogProvider'
 
 function AlbumCard({ event }: { event: any }) {
   const { foto, loading, refetch } = useFotoByEvent(event.id)
+  const { showAlert } = useDialog()
   const [uploading, setUploading] = useState(false)
 
   async function handleUpload(files: FileList | null) {
@@ -23,7 +25,7 @@ function AlbumCard({ event }: { event: any }) {
 
   async function handleHapus(id: string) {
     const { error } = await hapusFoto(id)
-    if (error) alert('Gagal hapus')
+    if (error) showAlert('Gagal hapus')
     else refetch()
   }
 

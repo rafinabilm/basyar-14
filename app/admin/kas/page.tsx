@@ -5,6 +5,7 @@ import { PageHeader } from '@/app/components/ui/PageHeader'
 import { Card } from '@/app/components/ui/Card'
 import { useKas, insertTransaksi } from '@/app/hooks/useKas'
 import { uploadFile } from '@/app/hooks/useUpload'
+import { useDialog } from '@/app/providers/DialogProvider'
 
 function fmt(n: number) {
   return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(Math.abs(n))
@@ -12,6 +13,7 @@ function fmt(n: number) {
 
 export default function AdminKasPage() {
   const { transaksi, saldo, totalMasuk, totalKeluar, loading, refetch } = useKas()
+  const { showAlert } = useDialog()
   const [showForm, setShowForm] = useState(false)
   const [saving, setSaving] = useState(false)
   const [form, setForm] = useState({ jenis: 'pengeluaran', jumlah: '', keterangan: '', kategori: 'lainnya', tanggal: new Date().toISOString().split('T')[0] })
@@ -27,7 +29,7 @@ export default function AdminKasPage() {
     }
     const { error } = await insertTransaksi({ ...form, jumlah: parseInt(form.jumlah), foto_bukti_url })
     setSaving(false)
-    if (error) { alert('Gagal: ' + error.message); return }
+    if (error) { showAlert('Gagal: ' + error.message); return }
     setShowForm(false)
     setForm({ jenis: 'pengeluaran', jumlah: '', keterangan: '', kategori: 'lainnya', tanggal: new Date().toISOString().split('T')[0] })
     setFile(null)

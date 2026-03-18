@@ -6,6 +6,7 @@ import { Card } from '@/app/components/ui/Card'
 import { Pill } from '@/app/components/ui/Pill'
 import { useEvents, insertEvent, hapusEvent } from '@/app/hooks/useGaleri'
 import { uploadFile } from '@/app/hooks/useUpload'
+import { useDialog } from '@/app/providers/DialogProvider'
 
 function getDaysUntil(dateStr: string): number {
   const today = new Date()
@@ -16,6 +17,7 @@ function getDaysUntil(dateStr: string): number {
 
 export default function AdminEventPage() {
   const { events, loading, refetch } = useEvents()
+  const { showAlert, showConfirm } = useDialog()
   const [showForm, setShowForm] = useState(false)
   const [saving, setSaving] = useState(false)
   const [form, setForm] = useState({ nama_event: '', tanggal: '', lokasi: '', deskripsi: '' })
@@ -33,7 +35,7 @@ export default function AdminEventPage() {
     }
     const { error } = await insertEvent({ ...form, foto_cover_url })
     setSaving(false)
-    if (error) { alert('Gagal: ' + error.message); return }
+    if (error) { showAlert('Gagal: ' + error.message); return }
     setShowForm(false)
     setForm({ nama_event: '', tanggal: '', lokasi: '', deskripsi: '' })
     setCoverFile(null)
@@ -41,9 +43,14 @@ export default function AdminEventPage() {
   }
 
   async function handleHapus(id: string, nama: string) {
-    if (!confirm(`Hapus event "${nama}"?`)) return
+    const isConfirmed = await showConfirm({
+      title: 'Hapus Event',
+      message: `Anda yakin ingin menghapus event "${nama}"? Semua data gallery didalamnya mungkin akan tetap ada di storage.`,
+      isDestructive: true
+    })
+    if (!isConfirmed) return
     const { error } = await hapusEvent(id)
-    if (error) alert('Gagal hapus: ' + error.message)
+    if (error) showAlert('Gagal hapus: ' + error.message)
     else refetch()
   }
 

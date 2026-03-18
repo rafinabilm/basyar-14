@@ -5,6 +5,7 @@ import { PageHeader } from '@/app/components/ui/PageHeader'
 import { Card } from '@/app/components/ui/Card'
 import { useAllPembayaran, verifikasiPembayaran, useAllTagihan } from '@/app/hooks/useIuran'
 import { supabase } from '@/app/lib/supabase'
+import { useDialog } from '@/app/providers/DialogProvider'
 
 function fmt(n: number) {
   return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(n)
@@ -13,6 +14,7 @@ function fmt(n: number) {
 export default function AdminIuranPage() {
   const { pembayaran, loading: pembLoading, refetch: refetchPembayaran } = useAllPembayaran()
   const { tagihan, loading: tagihanLoading, refetch: refetchTagihan } = useAllTagihan()
+  const { showAlert, showConfirm } = useDialog()
   
   const [tab, setTab] = useState<'pembayaran'|'tagihan'>('pembayaran')
   const [verifying, setVerifying] = useState<string | null>(null)
@@ -32,7 +34,7 @@ export default function AdminIuranPage() {
   async function handleVerifikasi(id: string) {
     setVerifying(id)
     const { error } = await verifikasiPembayaran(id)
-    if (error) alert('Gagal verifikasi: ' + error.message)
+    if (error) showAlert('Gagal verifikasi: ' + error.message)
     else refetchPembayaran()
     setVerifying(null)
   }
@@ -57,15 +59,20 @@ export default function AdminIuranPage() {
   }
 
   async function handleHapusTagihan(t: any) {
-    if (!confirm(`Hapus tagihan "${t.judul}"?\n\nPerhatian: Jika sudah ada yang mentransfer untuk tagihan ini, tagihan tidak bisa dihapus.`)) return
+    const isConfirmed = await showConfirm({
+      title: 'Hapus Tagihan',
+      message: `Anda yakin ingin menghapus tagihan "${t.judul}"?\n\nPerhatian: Jika sudah ada yang mentransfer untuk tagihan ini, aksi penghapusan akan ditolak.`,
+      isDestructive: true
+    })
+    if (!isConfirmed) return
     
     // Optimistic / Simple Delete
     const { error } = await supabase.from('tagihan').delete().eq('id', t.id)
     if (error) {
-      alert('Gagal menghapus tagihan. Pastikan tidak ada pembayaran pada tagihan ini (Anda bisa mengarsipkan/menutup dengan mengganti ke Visibilitas Privat).')
+      showAlert({ title: 'Gagal Menghapus', message: 'Terdapat data pembayaran pada tagihan ini. Harap ubah visibilitas menjadi Privat untuk menutup tagihan.' })
     } else {
       refetchTagihan()
-      alert('Tagihan terhapus!')
+      showAlert('Tagihan terhapus!')
     }
   }
 
@@ -95,11 +102,11 @@ export default function AdminIuranPage() {
     }
 
     setSaving(false)
-    if (error) { alert('Gagal: ' + error.message); return }
+    if (error) { showAlert('Gagal: ' + error.message); return }
     handleTutupForm()
     refetchTagihan()
     setTab('tagihan') // Pindah otomatis biar kelihatan
-    alert(editId ? 'Tagihan berhasil diupdate!' : 'Tagihan berhasil ditambahkan!')
+    showAlert(editId ? 'Tagihan berhasil diupdate!' : 'Tagihan berhasil ditambahkan!')
   }
 
   return (

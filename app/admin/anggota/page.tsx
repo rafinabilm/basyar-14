@@ -5,9 +5,11 @@ import { PageHeader } from '@/app/components/ui/PageHeader'
 import { Card } from '@/app/components/ui/Card'
 import { supabase } from '@/app/lib/supabase'
 import { useAnggota } from '@/app/hooks/useIuran'
+import { useDialog } from '@/app/providers/DialogProvider'
 
 export default function AdminAnggotaPage() {
   const { anggota, loading } = useAnggota()
+  const { showAlert, showConfirm } = useDialog()
   const [search, setSearch] = useState('')
   const [showForm, setShowForm] = useState(false)
   const [nama, setNama] = useState('')
@@ -24,7 +26,7 @@ export default function AdminAnggotaPage() {
     setSaving(true)
     const { error } = await supabase.from('anggota').insert([{ nama: nama.trim() }])
     setSaving(false)
-    if (error) { alert('Gagal: ' + error.message); return }
+    if (error) { showAlert('Gagal: ' + error.message); return }
     setNama('')
     setShowForm(false)
     setRefreshKey(k => k + 1)
@@ -32,11 +34,17 @@ export default function AdminAnggotaPage() {
   }
 
   async function handleHapus(id: string, namaAnggota: string) {
-    if (!confirm(`Hapus anggota "${namaAnggota}"? Semua data terkait (pembayaran) akan ikut terhapus.`)) return
+    const isConfirmed = await showConfirm({
+      title: 'Hapus Anggota',
+      message: `Hapus anggota "${namaAnggota}"?\nSemua data terkait (pembayaran) akan ikut terhapus.`,
+      isDestructive: true
+    })
+    if (!isConfirmed) return
+    
     setDeleting(id)
     const { error } = await supabase.from('anggota').delete().eq('id', id)
     setDeleting(null)
-    if (error) { alert('Gagal hapus: ' + error.message); return }
+    if (error) { showAlert('Gagal hapus: ' + error.message); return }
     window.location.reload()
   }
 
@@ -45,7 +53,7 @@ export default function AdminAnggotaPage() {
     setSaving(true)
     const { error } = await supabase.from('anggota').update({ nama: editNama.trim() }).eq('id', id)
     setSaving(false)
-    if (error) { alert('Gagal edit: ' + error.message); return }
+    if (error) { showAlert('Gagal edit: ' + error.message); return }
     setEditingId(null)
     setEditNama('')
     window.location.reload()

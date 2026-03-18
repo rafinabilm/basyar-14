@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next'
 import './globals.css'
+import { DialogProvider } from '@/app/providers/DialogProvider'
 
 export const metadata: Metadata = {
   title: 'Basyar-14 | PP Al-Hamid',
@@ -34,7 +35,9 @@ export default function RootLayout({
       </head>
       <body>
         <div className="mobile-container">
-          {children}
+          <DialogProvider>
+            {children}
+          </DialogProvider>
         </div>
       </body>
     </html>

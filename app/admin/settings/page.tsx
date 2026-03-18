@@ -3,6 +3,7 @@
 import { useRouter } from 'next/navigation'
 import { useState, useEffect } from 'react'
 import { supabase } from '@/app/lib/supabase'
+import { useDialog } from '@/app/providers/DialogProvider'
 
 interface AdminUser {
   id: string
@@ -11,6 +12,7 @@ interface AdminUser {
 
 export default function AdminSettingsPage() {
   const router = useRouter()
+  const { showAlert } = useDialog()
   const [currentUser, setCurrentUser] = useState<AdminUser | null>(null)
   const [showTambah, setShowTambah] = useState(false)
   const [emailBaru, setEmailBaru] = useState('')
@@ -30,7 +32,7 @@ export default function AdminSettingsPage() {
 
   async function handleTambahAdmin() {
     if (!emailBaru || !passwordBaru) return
-    if (passwordBaru.length < 6) { alert('Password minimal 6 karakter'); return }
+    if (passwordBaru.length < 6) { showAlert('Password minimal 6 karakter'); return }
     setSaving(true)
     const { error } = await supabase.auth.signUp({
       email: emailBaru,
@@ -38,10 +40,10 @@ export default function AdminSettingsPage() {
     })
     setSaving(false)
     if (error) {
-      alert('Gagal: ' + error.message)
+      showAlert('Gagal: ' + error.message)
       return
     }
-    alert(`Admin baru berhasil dibuat: ${emailBaru}\nAkun dapat langsung login.`)
+    showAlert(`Admin baru berhasil dibuat: ${emailBaru}\nAkun dapat langsung login.`)
     setEmailBaru('')
     setPasswordBaru('')
     setShowTambah(false)
