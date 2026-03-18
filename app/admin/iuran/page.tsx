@@ -1,90 +1,74 @@
 'use client'
 
 import { useState } from 'react'
-import { Card } from '@/app/components/ui/Card'
-import { Pill } from '@/app/components/ui/Pill'
-import { PageHeader } from '@/app/components/ui/PageHeader'
 
-const DUMMY_PEMBAYARAN = [
+const DUMMY = [
   { id: '1', nama: 'Budi Santoso', tagihan: 'Iuran Bukber', jumlah: 50000, status: 'menunggu' },
   { id: '2', nama: 'Siti Rahayu', tagihan: 'Kas Rutin Apr', jumlah: 20000, status: 'menunggu' },
   { id: '3', nama: 'Ahmad Fauzi', tagihan: 'Iuran Bukber', jumlah: 75000, status: 'lunas', extra: 25000 },
+  { id: '4', nama: 'Dewi Lestari', tagihan: 'Kas Rutin Apr', jumlah: 20000, status: 'lunas' },
 ]
 
-function formatRupiah(n: number) {
+function fmt(n: number) {
   return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(n)
 }
 
 export default function AdminIuranPage() {
-  const [pembayaran, setPembayaran] = useState(DUMMY_PEMBAYARAN)
+  const [items, setItems] = useState(DUMMY)
 
   function verifikasi(id: string) {
-    setPembayaran(p => p.map(x => x.id === id ? { ...x, status: 'lunas' } : x))
+    setItems(p => p.map(x => x.id === id ? { ...x, status: 'lunas' } : x))
   }
 
-  const menunggu = pembayaran.filter(p => p.status === 'menunggu')
+  const menunggu = items.filter(p => p.status === 'menunggu')
 
   return (
-    <main className="pb-32">
-      <div className="px-4 pt-5 pb-2 animate-in delay-1">
-        <PageHeader
-          title="Kelola Iuran"
-          action={
-            <button className="text-[10px] font-bold text-white bg-[var(--acc)] px-4 py-2 rounded-full">
-              + Tagihan
-            </button>
-          }
-        />
+    <main style={{ paddingBottom: '100px' }}>
+      <div style={{ padding: '20px 16px 8px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+        <h1 style={{ fontSize: '26px', fontWeight: 800, color: '#1C2B22', letterSpacing: '-0.5px' }}>Kelola Iuran</h1>
+        <button style={{ background: '#2E7D52', color: 'white', border: 'none', borderRadius: '20px', padding: '8px 16px', fontSize: '11px', fontWeight: 700, cursor: 'pointer', fontFamily: 'Nunito, sans-serif' }}>
+          + Tagihan
+        </button>
       </div>
 
-      <div className="px-4 flex flex-col gap-4">
+      <div style={{ padding: '0 16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
         {menunggu.length > 0 && (
-          <div className="bg-[#FFFBEB] border border-[#E5C04A] rounded-xl px-4 py-3 animate-in delay-1">
-            <div className="text-[11px] font-bold text-[var(--warn)]">
-              ⏳ {menunggu.length} Pembayaran Menunggu Verifikasi
-            </div>
+          <div style={{ background: '#FFFBEB', border: '1px solid #E5C04A', borderRadius: '14px', padding: '12px 14px' }}>
+            <div style={{ fontSize: '12px', fontWeight: 700, color: '#B8860B' }}>⏳ {menunggu.length} Pembayaran Menunggu Verifikasi</div>
           </div>
         )}
 
-        <div className="animate-in delay-2 flex flex-col gap-3">
-          {pembayaran.map(p => (
-            <Card key={p.id}>
-              <div className="flex justify-between items-start">
-                <div>
-                  <div className="text-[12px] font-bold text-[var(--txt)]">{p.nama}</div>
-                  <div className="text-[9px] text-[var(--mut)]">{p.tagihan}</div>
-                  <div className="text-[11px] font-bold text-[var(--acc)] font-mono-num mt-0.5">
-                    {formatRupiah(p.jumlah)}
-                    {p.extra && (
-                      <span className="text-[9px] text-[var(--ok)] ml-1">
-                        (+{formatRupiah(p.extra)})
-                      </span>
-                    )}
-                  </div>
-                </div>
-                <div className="flex flex-col gap-1.5 items-end">
-                  <Pill
-                    label={p.status === 'menunggu' ? 'Menunggu' : 'Lunas'}
-                    variant={p.status === 'menunggu' ? 'warn' : 'green'}
-                  />
-                  {p.status === 'menunggu' && (
-                    <div className="flex gap-1.5 mt-1">
-                      <button
-                        onClick={() => verifikasi(p.id)}
-                        className="text-[9px] font-bold bg-[#EAF7EE] text-[var(--ok)] px-2.5 py-1 rounded-full"
-                      >
-                        ✓ Verif
-                      </button>
-                      <button className="text-[9px] font-bold bg-[var(--acsl)] text-[var(--acc)] px-2.5 py-1 rounded-full">
-                        Bukti
-                      </button>
-                    </div>
+        {items.map(p => (
+          <div key={p.id} style={{ background: '#FFFFFF', borderRadius: '14px', padding: '14px', border: '1px solid #E2D9C8' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+              <div>
+                <div style={{ fontSize: '13px', fontWeight: 700, color: '#1C2B22' }}>{p.nama}</div>
+                <div style={{ fontSize: '10px', color: '#A0B0A4', marginTop: '2px' }}>{p.tagihan}</div>
+                <div style={{ fontSize: '14px', fontWeight: 700, color: '#2E7D52', fontFamily: 'Space Grotesk, monospace', marginTop: '4px' }}>
+                  {fmt(p.jumlah)}
+                  {'extra' in p && p.extra && (
+                    <span style={{ fontSize: '10px', color: '#1E7B3A', marginLeft: '6px' }}>(+{fmt(p.extra as number)})</span>
                   )}
                 </div>
               </div>
-            </Card>
-          ))}
-        </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', alignItems: 'flex-end' }}>
+                <span style={{ fontSize: '9px', fontWeight: 700, padding: '3px 10px', borderRadius: '20px', background: p.status === 'menunggu' ? '#FFFBEB' : '#EAF7EE', color: p.status === 'menunggu' ? '#B8860B' : '#1E7B3A' }}>
+                  {p.status === 'menunggu' ? 'Menunggu' : 'Lunas'}
+                </span>
+                {p.status === 'menunggu' && (
+                  <div style={{ display: 'flex', gap: '6px' }}>
+                    <button onClick={() => verifikasi(p.id)} style={{ fontSize: '10px', fontWeight: 700, background: '#EAF7EE', color: '#1E7B3A', border: 'none', padding: '5px 10px', borderRadius: '20px', cursor: 'pointer', fontFamily: 'Nunito, sans-serif' }}>
+                      ✓ Verif
+                    </button>
+                    <button style={{ fontSize: '10px', fontWeight: 700, background: '#EAF6EE', color: '#2E7D52', border: 'none', padding: '5px 10px', borderRadius: '20px', cursor: 'pointer', fontFamily: 'Nunito, sans-serif' }}>
+                      Bukti
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        ))}
       </div>
     </main>
   )

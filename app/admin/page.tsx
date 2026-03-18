@@ -1,77 +1,76 @@
 import Link from 'next/link'
-import { Card } from '@/app/components/ui/Card'
 
 const STATS = [
-  { label: 'Total Anggota', value: '47', unit: 'orang' },
-  { label: 'Saldo Kas', value: '1,25jt', unit: 'rupiah' },
+  { label: 'Total Anggota', value: '47', unit: 'orang', progress: null },
+  { label: 'Saldo Kas', value: '1,25jt', unit: 'rupiah', progress: null },
   { label: 'Lunas Iuran', value: '32', unit: '/47', progress: 68 },
-  { label: 'Event Aktif', value: '2', unit: 'upcoming' },
+  { label: 'Event Aktif', value: '2', unit: 'upcoming', progress: null },
 ]
 
 const QUICK_ACTIONS = [
-  { label: 'Tambah Transaksi', href: '/admin/kas', icon: <svg viewBox="0 0 24 24" fill="none" strokeWidth={2} className="w-4 h-4"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg> },
-  { label: 'Verifikasi Iuran', href: '/admin/iuran', icon: <svg viewBox="0 0 24 24" fill="none" strokeWidth={2} className="w-4 h-4"><polyline points="20 6 9 17 4 12"/></svg> },
-  { label: 'Upload Foto', href: '/admin/galeri', icon: <svg viewBox="0 0 24 24" fill="none" strokeWidth={2} className="w-4 h-4"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg> },
-  { label: 'Buat Event', href: '/admin/event', icon: <svg viewBox="0 0 24 24" fill="none" strokeWidth={2} className="w-4 h-4"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> },
+  { label: 'Tambah Transaksi', href: '/admin/kas', icon: '+' },
+  { label: 'Verifikasi Iuran', href: '/admin/iuran', icon: '✓' },
+  { label: 'Upload Foto', href: '/admin/galeri', icon: '📸' },
+  { label: 'Buat Event', href: '/admin/event', icon: '📅' },
 ]
 
 export default function AdminDashboardPage() {
   return (
-    <main className="pb-32">
-      <div className="px-4 pt-5 pb-2 animate-in delay-1">
-        <div className="flex justify-between items-start">
+    <main style={{ paddingBottom: '100px' }}>
+      <div style={{ padding: '20px 16px 8px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
           <div>
-            <p className="text-[9px] font-mono tracking-widest uppercase text-[var(--acc)]">Admin Panel</p>
-            <h1 className="text-[22px] font-extrabold text-[var(--txt)] tracking-tight">Dashboard</h1>
+            <p style={{ fontSize: '9px', fontFamily: 'monospace', letterSpacing: '1px', textTransform: 'uppercase', color: '#2E7D52' }}>Admin Panel</p>
+            <h1 style={{ fontSize: '26px', fontWeight: 800, color: '#1C2B22', letterSpacing: '-0.5px', lineHeight: 1.1 }}>Dashboard</h1>
           </div>
-          <span className="text-[10px] font-bold text-[var(--err)] bg-[#FEE2E2] px-2.5 py-1 rounded-full">
-            3 perlu aksi
-          </span>
+          <span style={{ fontSize: '10px', fontWeight: 700, color: '#C0392B', background: '#FEE2E2', padding: '4px 10px', borderRadius: '20px' }}>3 perlu aksi</span>
         </div>
       </div>
 
-      <div className="px-4 flex flex-col gap-4">
+      <div style={{ padding: '0 16px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
         {/* Alert */}
-        <Link href="/admin/iuran" className="animate-in delay-1">
-          <div className="bg-[#FFFBEB] border border-[#E5C04A] rounded-xl px-4 py-3 flex justify-between items-center">
+        <Link href="/admin/iuran" style={{ textDecoration: 'none' }}>
+          <div style={{ background: '#FFFBEB', border: '1px solid #E5C04A', borderRadius: '14px', padding: '12px 14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div>
-              <div className="text-[11px] font-bold text-[var(--warn)]">⏳ 3 Pembayaran Menunggu Verifikasi</div>
-              <div className="text-[10px] text-[var(--sec)] mt-0.5">Tap untuk review →</div>
+              <div style={{ fontSize: '12px', fontWeight: 700, color: '#B8860B' }}>⏳ 3 Pembayaran Menunggu Verifikasi</div>
+              <div style={{ fontSize: '10px', color: '#5A6E5E', marginTop: '2px' }}>Tap untuk review →</div>
             </div>
-            <svg viewBox="0 0 24 24" fill="none" stroke="var(--warn)" className="w-4 h-4" strokeWidth={2}>
-              <polyline points="9 18 15 12 9 6"/>
+            <svg viewBox="0 0 24 24" fill="none" stroke="#B8860B" style={{ width: '16px', height: '16px', flexShrink: 0 }} strokeWidth={2}>
+              <polyline points="9 18 15 12 9 6" />
             </svg>
           </div>
         </Link>
 
         {/* Stats Grid */}
-        <div className="grid grid-cols-2 gap-3 animate-in delay-2">
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
           {STATS.map((s) => (
-            <Card key={s.label}>
-              <div className="text-[9px] font-mono tracking-widest uppercase text-[var(--mut)]">{s.label}</div>
-              <div className="text-[20px] font-bold text-[var(--acc)] font-mono-num mt-1 tracking-tight leading-none">
+            <div key={s.label} style={{ background: '#FFFFFF', borderRadius: '14px', padding: '14px', border: '1px solid #E2D9C8' }}>
+              <div style={{ fontSize: '9px', fontFamily: 'monospace', letterSpacing: '1px', textTransform: 'uppercase', color: '#A0B0A4' }}>{s.label}</div>
+              <div style={{ fontSize: '22px', fontWeight: 700, color: '#2E7D52', fontFamily: 'Space Grotesk, monospace', marginTop: '4px', letterSpacing: '-0.5px', lineHeight: 1 }}>
                 {s.value}
-                {s.unit && <span className="text-[11px] text-[var(--mut)] ml-1 font-sans">{s.unit}</span>}
+                <span style={{ fontSize: '11px', color: '#A0B0A4', fontFamily: 'Nunito, sans-serif', marginLeft: '3px' }}>{s.unit}</span>
               </div>
               {s.progress && (
-                <div className="h-1.5 bg-[var(--bord)] rounded-full mt-2 overflow-hidden">
-                  <div className="h-full bg-[var(--acc)] rounded-full" style={{ width: `${s.progress}%` }} />
+                <div style={{ height: '4px', background: '#E2D9C8', borderRadius: '2px', marginTop: '8px', overflow: 'hidden' }}>
+                  <div style={{ height: '100%', width: `${s.progress}%`, background: '#2E7D52', borderRadius: '2px' }} />
                 </div>
               )}
-            </Card>
+            </div>
           ))}
         </div>
 
         {/* Quick Actions */}
-        <div className="animate-in delay-3">
-          <p className="text-[9px] font-mono tracking-widest uppercase text-[var(--mut)] mb-2">Quick Action</p>
-          <div className="grid grid-cols-2 gap-3">
+        <div>
+          <p style={{ fontSize: '9px', fontFamily: 'monospace', letterSpacing: '1px', textTransform: 'uppercase', color: '#A0B0A4', marginBottom: '10px' }}>Quick Action</p>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
             {QUICK_ACTIONS.map((a) => (
-              <Link key={a.href} href={a.href}>
-                <Card className="flex items-center gap-2 cursor-pointer hover:border-[var(--acc)] transition-colors">
-                  <span style={{ color: 'var(--acc)' }}>{a.icon}</span>
-                  <span className="text-[10px] font-bold text-[var(--txt)]">{a.label}</span>
-                </Card>
+              <Link key={a.href} href={a.href} style={{ textDecoration: 'none' }}>
+                <div style={{ background: '#FFFFFF', borderRadius: '14px', padding: '14px', border: '1px solid #E2D9C8', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <div style={{ width: '32px', height: '32px', borderRadius: '10px', background: '#EAF6EE', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px', flexShrink: 0 }}>
+                    {a.icon}
+                  </div>
+                  <span style={{ fontSize: '11px', fontWeight: 700, color: '#1C2B22' }}>{a.label}</span>
+                </div>
               </Link>
             ))}
           </div>
