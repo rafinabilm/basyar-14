@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import React, { useState } from 'react'
 import Link from 'next/link'
 import { BottomNav } from '@/app/components/ui/BottomNav'
 import { useEventById, useFotoByEvent, GaleriFoto } from '@/app/hooks/useGaleri'
@@ -12,9 +12,12 @@ const PLACEHOLDER_COLORS = [
   'linear-gradient(135deg, #E2D9C8, #C8DDD0)',
 ]
 
-export default function GaleriDetailPage({ params }: { params: { id: string } }) {
-  const { event, loading: eventLoading } = useEventById(params.id)
-  const { foto, loading: fotoLoading } = useFotoByEvent(params.id)
+export default function GaleriDetailPage({ params }: { params: any }) {
+  const resolvedParams = params instanceof Promise ? React.use(params) : params;
+  const id = resolvedParams.id;
+
+  const { event, loading: eventLoading } = useEventById(id)
+  const { foto, loading: fotoLoading } = useFotoByEvent(id)
   const [selectedFoto, setSelectedFoto] = useState<GaleriFoto | null>(null)
 
   return (

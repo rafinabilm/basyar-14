@@ -46,15 +46,22 @@ export function useEventById(id: string) {
 
   useEffect(() => {
     if (!id) return
-    supabase
-      .from('event')
-      .select('*')
-      .eq('id', id)
-      .single()
-      .then(({ data }) => {
+    async function fetchEvent() {
+      try {
+        const { data, error } = await supabase
+          .from('event')
+          .select('*')
+          .eq('id', id)
+          .single()
+        if (error) console.error('useEventById error:', error)
         setEvent(data)
+      } catch (err) {
+        console.error(err)
+      } finally {
         setLoading(false)
-      })
+      }
+    }
+    fetchEvent()
   }, [id])
 
   return { event, loading }
@@ -65,13 +72,19 @@ export function useFotoByEvent(eventId: string) {
   const [loading, setLoading] = useState(true)
 
   async function fetch() {
-    const { data } = await supabase
-      .from('galeri_foto')
-      .select('*')
-      .eq('event_id', eventId)
-      .order('created_at', { ascending: false })
-    setFoto(data || [])
-    setLoading(false)
+    try {
+      const { data, error } = await supabase
+        .from('galeri_foto')
+        .select('*')
+        .eq('event_id', eventId)
+        .order('created_at', { ascending: false })
+      if (error) console.error('useFotoByEvent error:', error)
+      setFoto(data || [])
+    } catch (err) {
+      console.error(err)
+    } finally {
+      setLoading(false)
+    }
   }
 
   useEffect(() => { if (eventId) fetch() }, [eventId])
