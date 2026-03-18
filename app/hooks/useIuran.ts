@@ -139,9 +139,37 @@ export async function submitPembayaran(data: {
 }
 
 export async function verifikasiPembayaran(id: string) {
+  // 1. Fetch data
+  const { data: pemb, error: fetchErr } = await supabase
+    .from('pembayaran_iuran')
+    .select('*, anggota(nama), tagihan(judul)')
+    .eq('id', id)
+    .single()
+
+  if (fetchErr) return { error: fetchErr }
+
+  // 2. Update status
   const { error } = await supabase
     .from('pembayaran_iuran')
     .update({ status: 'lunas' })
     .eq('id', id)
-  return { error }
+
+  if (error) return { error }
+
+  // 3. Insert ke transaksi_kas
+  const namaAnggota = pemb.anggota?.nama || 'Anggota'
+  const judulTagihan = pemb.tagihan?.judul || 'Iuran'
+
+  const { error: kasErr } = await supabase.from('transaksi_kas').insert([{
+    tanggal: new Date().toISOString().split('T')[0],
+    jenis: 'pemasukan',
+    jumlah: pemb.jumlah_bayar,
+    keterangan: `Pembayaran ${judulTagihan} - ${namaAnggota}`,
+    kategori: 'iuran',
+    foto_bukti_url: pemb.foto_bukti_url || null
+  }])
+
+  if (kasErr) return { error: kasErr }
+
+  return { error: null }
 }
