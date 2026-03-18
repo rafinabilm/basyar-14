@@ -8,39 +8,42 @@ import { AdminNav } from '@/app/components/admin/AdminNav'
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter()
   const pathname = usePathname()
-  const [loading, setLoading] = useState(true)
+  const [status, setStatus] = useState<'loading' | 'auth' | 'unauth'>('loading')
   const isLoginPage = pathname === '/admin/login'
 
   useEffect(() => {
     if (isLoginPage) {
-      setLoading(false)
+      setStatus('auth')
       return
     }
 
-    supabase.auth.getSession().then(({ data }) => {
-      if (!data.session) {
-        router.push('/admin/login')
-      } else {
-        setLoading(false)
+    // Listen to auth state changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        if (session) {
+          setStatus('auth')
+        } else if (event === 'INITIAL_SESSION' && !session) {
+          setStatus('unauth')
+        } else if (event === 'SIGNED_OUT') {
+          setStatus('unauth')
+        }
       }
-    })
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === 'SIGNED_IN' && session) {
-        setLoading(false)
-      }
-      if (event === 'SIGNED_OUT') {
-        router.push('/admin/login')
-      }
-    })
+    )
 
     return () => subscription.unsubscribe()
   }, [isLoginPage, router])
 
-  if (loading && !isLoginPage) {
+  useEffect(() => {
+    if (status === 'unauth') {
+      router.push('/admin/login')
+    }
+  }, [status, router])
+
+  if (status === 'loading' && !isLoginPage) {
     return (
-      <div style={{ minHeight: '100dvh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#FBF8F3' }}>
-        <div style={{ width: '32px', height: '32px', border: '2px solid #2E7D52', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+      <div style={{ minHeight: '100dvh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: '#FBF8F3', gap: '16px' }}>
+        <div style={{ width: '36px', height: '36px', border: '3px solid #D4EDDE', borderTopColor: '#2E7D52', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+        <p style={{ fontSize: '12px', color: '#A0B0A4', fontFamily: 'Nunito, sans-serif' }}>Memverifikasi akses...</p>
         <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
       </div>
     )
@@ -48,7 +51,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   return (
     <div>
-      {!isLoginPage && <AdminNav />}
+      {!isLoginPage && status === 'auth' && <AdminNav />}
       {children}
     </div>
   )
