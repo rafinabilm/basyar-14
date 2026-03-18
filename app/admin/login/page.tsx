@@ -10,17 +10,19 @@ export default function AdminLoginPage() {
   const [error, setError] = useState('')
 
   async function handleGoogleLogin() {
-    setLoading(true)
-    setError('')
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: { redirectTo: `${window.location.origin}/admin` },
-    })
-    if (error) {
-      setError('Gagal login. Coba lagi.')
-      setLoading(false)
-    }
+  setLoading(true)
+  setError('')
+  const { error } = await supabase.auth.signInWithOAuth({
+    provider: 'google',
+    options: {
+      redirectTo: `${window.location.origin}/auth/callback`,
+    },
+  })
+  if (error) {
+    setError('Gagal login. Coba lagi.')
+    setLoading(false)
   }
+}
 
   return (
     <main style={{ minHeight: '100dvh', background: '#FBF8F3', display: 'flex', flexDirection: 'column' }}>
