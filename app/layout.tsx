@@ -1,8 +1,22 @@
 import type { Metadata, Viewport } from 'next'
+import { ReactNode } from 'react'
+import { Nunito, Space_Grotesk } from 'next/font/google'
 import './globals.css'
-import { DialogProvider } from '@/app/providers/DialogProvider'
+import { DialogProvider } from './providers/DialogProvider'
 import { Analytics } from '@vercel/analytics/next'
 import { SpeedInsights } from '@vercel/speed-insights/next'
+
+const nunito = Nunito({
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-nunito',
+})
+
+const spaceGrotesk = Space_Grotesk({
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-space-grotesk',
+})
 
 export const metadata: Metadata = {
   title: 'Basyar-14 | PP Al-Hamid',
@@ -25,16 +39,10 @@ export const viewport: Viewport = {
 export default function RootLayout({
   children,
 }: {
-  children: React.ReactNode
+  children: ReactNode
 }) {
   return (
-    <html lang="id">
-      <head>
-        <link
-          href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Space+Grotesk:wght@500;700&display=swap"
-          rel="stylesheet"
-        />
-      </head>
+    <html lang="id" className={`${nunito.variable} ${spaceGrotesk.variable}`}>
       <body>
         <div className="mobile-container">
           <DialogProvider>

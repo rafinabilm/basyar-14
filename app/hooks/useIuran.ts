@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { supabase } from '@/app/lib/supabase'
 
 export interface Tagihan {
@@ -54,16 +54,19 @@ export function useAllTagihan() {
   const [tagihan, setTagihan] = useState<Tagihan[]>([])
   const [loading, setLoading] = useState(true)
 
-  async function fetch() {
+  const fetch = useCallback(async (isInitial = false) => {
+    if (!isInitial) setLoading(true)
     const { data } = await supabase
       .from('tagihan')
       .select('*')
       .order('created_at', { ascending: false })
     setTagihan(data || [])
     setLoading(false)
-  }
+  }, [])
 
-  useEffect(() => { fetch() }, [])
+  useEffect(() => {
+    fetch(true)
+  }, [fetch])
 
   return { tagihan, loading, refetch: fetch }
 }
@@ -112,16 +115,19 @@ export function useAllPembayaran() {
   const [pembayaran, setPembayaran] = useState<PembayaranIuran[]>([])
   const [loading, setLoading] = useState(true)
 
-  async function fetch() {
+  const fetch = useCallback(async (isInitial = false) => {
+    if (!isInitial) setLoading(true)
     const { data } = await supabase
       .from('pembayaran_iuran')
       .select('*, anggota(nama), tagihan(judul, nominal)')
       .order('created_at', { ascending: false })
     setPembayaran(data || [])
     setLoading(false)
-  }
+  }, [])
 
-  useEffect(() => { fetch() }, [])
+  useEffect(() => {
+    fetch(true)
+  }, [fetch])
 
   return { pembayaran, loading, refetch: fetch }
 }

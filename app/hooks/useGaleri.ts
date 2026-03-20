@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { supabase } from '@/app/lib/supabase'
 
 export interface Event {
@@ -26,16 +26,19 @@ export function useEvents() {
   const [events, setEvents] = useState<Event[]>([])
   const [loading, setLoading] = useState(true)
 
-  async function fetch() {
+  const fetch = useCallback(async (isInitial = false) => {
+    if (!isInitial) setLoading(true)
     const { data } = await supabase
       .from('event')
       .select('*')
       .order('tanggal', { ascending: false })
     setEvents(data || [])
     setLoading(false)
-  }
+  }, [])
 
-  useEffect(() => { fetch() }, [])
+  useEffect(() => {
+    fetch(true)
+  }, [fetch])
 
   return { events, loading, refetch: fetch }
 }
@@ -71,7 +74,7 @@ export function useFotoByEvent(eventId: string) {
   const [foto, setFoto] = useState<GaleriFoto[]>([])
   const [loading, setLoading] = useState(true)
 
-  async function fetch() {
+  const fetch = useCallback(async () => {
     try {
       const { data, error } = await supabase
         .from('galeri_foto')
@@ -85,9 +88,11 @@ export function useFotoByEvent(eventId: string) {
     } finally {
       setLoading(false)
     }
-  }
+  }, [eventId])
 
-  useEffect(() => { if (eventId) fetch() }, [eventId])
+  useEffect(() => {
+    if (eventId) fetch()
+  }, [eventId, fetch])
 
   return { foto, loading, refetch: fetch }
 }

@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { supabase } from '@/app/lib/supabase'
 
 export interface TransaksiKas {
@@ -19,13 +19,8 @@ export function useKas() {
   const [transaksi, setTransaksi] = useState<TransaksiKas[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-
-  useEffect(() => {
-    fetchTransaksi()
-  }, [])
-
-  async function fetchTransaksi() {
-    setLoading(true)
+  const fetchTransaksi = useCallback(async (isInitial = false) => {
+    if (!isInitial) setLoading(true)
     const { data, error } = await supabase
       .from('transaksi_kas')
       .select('*')
@@ -34,7 +29,11 @@ export function useKas() {
     if (error) setError(error.message)
     else setTransaksi(data || [])
     setLoading(false)
-  }
+  }, [])
+
+  useEffect(() => {
+    fetchTransaksi(true)
+  }, [fetchTransaksi])
 
   const saldo = transaksi.reduce((acc, t) =>
     t.jenis === 'pemasukan' ? acc + t.jumlah : acc - t.jumlah, 0)
