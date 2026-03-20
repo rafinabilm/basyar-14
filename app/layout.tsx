@@ -21,6 +21,9 @@ const spaceGrotesk = Space_Grotesk({
 export const metadata: Metadata = {
   title: 'Basyar-14 | PP Al-Hamid',
   description: 'Website resmi Angkatan Basyar-14 Pondok Pesantren Al-Hamid',
+  icons: {
+    icon: 'https://api.iconify.design/material-symbols:b-circle-outline.svg?color=%232E7D52',
+  },
   robots: {
     index: false,
     follow: false,
