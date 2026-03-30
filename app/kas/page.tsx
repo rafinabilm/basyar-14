@@ -16,6 +16,7 @@ function fmt(n: number) {
 
 export default function KasPage() {
   const [activeFilter, setActiveFilter] = useState('Semua')
+  const [selectedBukti, setSelectedBukti] = useState<string | null>(null)
   const { transaksi, saldo, totalMasuk, totalKeluar, loading } = useKas()
 
   const filtered = transaksi.filter(t => {
@@ -94,25 +95,30 @@ export default function KasPage() {
                       <span style={{ fontWeight: 600, color: '#6366F1' }}>{t.kategori}</span> · {new Date(t.tanggal).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}
                     </div>
                     {t.foto_bukti_url && (
-                      <a href={t.foto_bukti_url} target="_blank" rel="noreferrer" style={{ 
-                        fontSize: '10px', 
-                        fontWeight: 700, 
-                        color: '#6366F1', 
-                        background: '#EEF2FF', 
-                        padding: '4px 10px', 
-                        borderRadius: '20px', 
-                        marginTop: '6px', 
-                        display: 'inline-flex', 
-                        alignItems: 'center',
-                        gap: '4px',
-                        textDecoration: 'none' 
-                      }}>
+                      <button 
+                        onClick={() => setSelectedBukti(t.foto_bukti_url || null)}
+                        style={{ 
+                          fontSize: '10px', 
+                          fontWeight: 700, 
+                          color: '#6366F1', 
+                          background: '#EEF2FF', 
+                          padding: '4px 10px', 
+                          borderRadius: '20px', 
+                          marginTop: '6px', 
+                          display: 'inline-flex', 
+                          alignItems: 'center',
+                          gap: '4px',
+                          border: 'none',
+                          cursor: 'pointer',
+                          fontFamily: 'Nunito, sans-serif'
+                        }}
+                      >
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" style={{ width: '10px', height: '10px' }} strokeWidth={3}>
                           <path d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0z" />
                           <path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                         </svg>
                         Lihat Bukti
-                      </a>
+                      </button>
                     )}
                   </div>
                 </div>
@@ -129,6 +135,61 @@ export default function KasPage() {
           </div>
         )}
       </div>
+
+      {/* Modal Bukti */}
+      {selectedBukti && (
+        <div 
+          onClick={() => setSelectedBukti(null)}
+          style={{ 
+            position: 'fixed', 
+            inset: 0, 
+            background: 'rgba(0,0,0,0.8)', 
+            backdropFilter: 'blur(10px)', 
+            zIndex: 1000, 
+            display: 'flex', 
+            alignItems: 'center', 
+            justifyContent: 'center', 
+            padding: '20px',
+            animation: 'fadeIn 0.3s ease-out'
+          }}
+        >
+          <div style={{ position: 'relative', maxWidth: '100%', maxHeight: '100%' }} onClick={e => e.stopPropagation()}>
+             <img 
+               src={selectedBukti} 
+               alt="Bukti Transaksi" 
+               style={{ 
+                 maxWidth: '100%', 
+                 maxHeight: '80vh', 
+                 borderRadius: '20px', 
+                 boxShadow: '0 20px 50px rgba(0,0,0,0.5)',
+                 border: '2px solid rgba(255,255,255,0.1)'
+               }} 
+             />
+             <button 
+               onClick={() => setSelectedBukti(null)}
+               style={{ 
+                 position: 'absolute', 
+                 top: '-50px', 
+                 right: '0', 
+                 background: 'white', 
+                 border: 'none', 
+                 width: '36px', 
+                 height: '36px', 
+                 borderRadius: '50%', 
+                 display: 'flex', 
+                 alignItems: 'center', 
+                 justifyContent: 'center', 
+                 cursor: 'pointer',
+                 boxShadow: '0 4px 12px rgba(0,0,0,0.2)'
+               }}
+             >
+               <svg viewBox="0 0 24 24" fill="none" stroke="#111827" style={{ width: '20px', height: '20px' }} strokeWidth={2.5}>
+                 <path d="M18 6L6 18M6 6l12 12" />
+               </svg>
+             </button>
+          </div>
+        </div>
+      )}
 
       <BottomNav />
     </main>

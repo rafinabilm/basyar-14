@@ -19,33 +19,36 @@ export const revalidate = 60
 
 export default async function HomePage() {
   const now = new Date()
-  const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString()
   const currentPeriod = now.toLocaleDateString('id-ID', { month: 'long', year: 'numeric' })
+  const monthPrefix = now.toISOString().substring(0, 7) // format "YYYY-MM"
 
-  const [transaksiRes, eventRes, fotoRes, anggotaRes, currentMonthRes, latestEventsRes] = await Promise.all([
+  const [transaksiRes, fotoCountRes, fotoRes, anggotaRes, latestEventsRes] = await Promise.all([
     supabase.from('transaksi_kas').select('*').order('tanggal', { ascending: false }),
-    supabase.from('event').select('*', { count: 'exact' }).order('tanggal', { ascending: true }).gte('tanggal', new Date().toISOString().split('T')[0]),
+    supabase.from('galeri_foto').select('id', { count: 'exact', head: true }),
     supabase.from('galeri_foto').select('*').order('created_at', { ascending: false }).limit(6),
     supabase.from('anggota').select('id', { count: 'exact' }),
-    supabase.from('transaksi_kas').select('jenis, jumlah, status, tanggal').gte('tanggal', firstDayOfMonth),
     supabase.from('event').select('*').order('tanggal', { ascending: false }).limit(3)
   ])
 
-  // Filter archived in JS
+  // Filter archived in JS as source of truth
   const transaksi = (transaksiRes.data || []).filter((t: any) => t.status !== 'archived')
-  const upcomingEvents = eventRes.data || []
-  const eventCount = eventRes.count || 0
+  
+  const totalFoto = fotoCountRes.count || 0
   const fotos = fotoRes.data || []
   const totalAnggota = anggotaRes.count || 0
-  const currentMonthData = (currentMonthRes.data || []).filter((t: any) => t.status !== 'archived')
   const latestEvents = latestEventsRes.data || []
 
+  // Main balance logic
   const saldo = transaksi.reduce((acc: number, t: any) => t.jenis === 'pemasukan' ? acc + t.jumlah : acc - t.jumlah, 0)
   const totalMasuk = transaksi.filter((t: any) => t.jenis === 'pemasukan').reduce((acc: number, t: any) => acc + t.jumlah, 0)
   const totalKeluar = transaksi.filter((t: any) => t.jenis === 'pengeluaran').reduce((acc: number, t: any) => acc + t.jumlah, 0)
   
-  const monthMasuk = currentMonthData.filter((t: any) => t.jenis === 'pemasukan').reduce((acc: number, t: any) => acc + t.jumlah, 0)
-  const monthKeluar = currentMonthData.filter((t: any) => t.jenis === 'pengeluaran').reduce((acc: number, t: any) => acc + t.jumlah, 0)
+  // Monthly stats derived from the same source of truth (transaksi)
+  // Use .startsWith to handle both "YYYY-MM-DD" and "YYYY-MM-DD HH:mm:ss"
+  const monthData = transaksi.filter((t: any) => t.tanggal && t.tanggal.startsWith(monthPrefix))
+  
+  const monthMasuk = monthData.filter((t: any) => t.jenis === 'pemasukan').reduce((acc: number, t: any) => acc + t.jumlah, 0)
+  const monthKeluar = monthData.filter((t: any) => t.jenis === 'pengeluaran').reduce((acc: number, t: any) => acc + t.jumlah, 0)
 
   const recentTransaksi = transaksi.slice(0, 5)
 
@@ -74,10 +77,10 @@ export default async function HomePage() {
             icon={<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" style={{ width: '18px', height: '18px' }} strokeWidth={2.5}><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></svg>}
           />
           <StatCard 
-            label="Kegiatan Terdekat" 
-            value={eventCount} 
-            subValue={upcomingEvents.length > 0 ? `Dlm waktu dekat` : 'Belum ada agenda'}
-            icon={<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" style={{ width: '18px', height: '18px' }} strokeWidth={2.5}><rect x="3" y="4" width="18" height="18" rx="2" ry="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" /></svg>}
+            label="Total Galeri" 
+            value={totalFoto} 
+            subValue={`${totalFoto > 0 ? totalFoto : 'Belum'} Foto terunggah`}
+            icon={<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" style={{ width: '18px', height: '18px' }} strokeWidth={2.5}><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" /><circle cx="12" cy="13" r="4" /></svg>}
             iconBg="#F5F3FF"
           />
           <StatCard 

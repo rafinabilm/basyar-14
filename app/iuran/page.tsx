@@ -20,10 +20,24 @@ export default function IuranPage() {
   // Form States
   const [selectedTagihanId, setSelectedTagihanId] = useState<string>('donasi')
   const [anggotaId, setAnggotaId] = useState('')
+  const [searchTerm, setSearchTerm] = useState('')
+  const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [jumlah, setJumlah] = useState('')
   const [file, setFile] = useState<File | null>(null)
   const [submitting, setSubmitting] = useState(false)
   const [submitted, setSubmitted] = useState(false)
+
+  // Filtered members based on searchTerm
+  const filteredAnggota = searchTerm.trim() === '' 
+    ? anggota 
+    : anggota.filter(a => a.nama.toLowerCase().includes(searchTerm.toLowerCase()))
+
+  // Function to handle choosing a member
+  const handleSelectMember = (id: string, nama: string) => {
+    setAnggotaId(id)
+    setSearchTerm(nama)
+    setIsMenuOpen(false)
+  }
 
   // Handle Tagihan selection change
   useEffect(() => {
@@ -60,6 +74,7 @@ export default function IuranPage() {
     setTimeout(() => {
        setSubmitted(false)
        setAnggotaId('')
+       setSearchTerm('')
        setJumlah('')
        setFile(null)
        setSelectedTagihanId('donasi')
@@ -108,22 +123,80 @@ export default function IuranPage() {
 
             <div style={{ height: '1px', background: '#F3F4F6' }} />
 
-            {/* Field: Nama Anggota */}
-            <div>
+            {/* Field: Nama Anggota (Searchable) */}
+            <div style={{ position: 'relative' }}>
               <div style={{ fontSize: '11px', fontWeight: 800, letterSpacing: '0.5px', textTransform: 'uppercase', color: '#9CA3AF', marginBottom: '8px' }}>Nama Anggota</div>
               <div style={{ position: 'relative' }}>
-                <select 
-                  value={anggotaId} 
-                  onChange={e => setAnggotaId(e.target.value)} 
-                  style={{ width: '100%', background: '#F9FAFB', border: '1px solid #F3F4F6', borderRadius: '16px', padding: '16px', fontSize: '15px', color: '#111827', fontFamily: 'Nunito, sans-serif', outline: 'none', appearance: 'none', fontWeight: 700 }}
-                >
-                  <option value="">Pilih namamu...</option>
-                  {anggota.map(a => <option key={a.id} value={a.id}>{a.nama}</option>)}
-                </select>
+                <input 
+                  type="text"
+                  placeholder="Ketik namamu..."
+                  value={searchTerm}
+                  onChange={(e) => {
+                    setSearchTerm(e.target.value)
+                    setAnggotaId('')
+                    setIsMenuOpen(true)
+                  }}
+                  onFocus={() => setIsMenuOpen(true)}
+                  style={{ width: '100%', background: '#F9FAFB', border: '1px solid #F3F4F6', borderRadius: '16px', padding: '16px', fontSize: '15px', color: '#111827', fontFamily: 'Nunito, sans-serif', outline: 'none', fontWeight: 700 }} 
+                />
                 <div style={{ position: 'absolute', right: '16px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}>
-                  <svg width="12" height="8" viewBox="0 0 12 8" fill="none"><path d="M1 1.5L6 6.5L11 1.5" stroke="#9CA3AF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                   {loading ? (
+                      <div style={{ fontSize: '12px', color: '#9CA3AF' }}>...</div>
+                   ) : (
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" strokeWidth="2.5"><circle cx="11" cy="11" r="8" /><path d="m21 21-4.3-4.3" /></svg>
+                   )}
                 </div>
               </div>
+
+              {/* Dropdown Menu */}
+              {isMenuOpen && (
+                <>
+                  <div 
+                    onClick={() => setIsMenuOpen(false)}
+                    style={{ position: 'fixed', inset: 0, zIndex: 40 }} 
+                  />
+                  <div style={{ 
+                    position: 'absolute', 
+                    top: 'calc(100% + 4px)', 
+                    left: 0, 
+                    right: 0, 
+                    background: 'white', 
+                    borderRadius: '16px', 
+                    boxShadow: '0 15px 30px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -5px rgba(0, 0, 0, 0.04)', 
+                    maxHeight: '240px', 
+                    overflowY: 'auto', 
+                    zIndex: 50,
+                    border: '1px solid #F3F4F6',
+                    padding: '8px'
+                  }}>
+                    {filteredAnggota.length === 0 ? (
+                      <div style={{ padding: '16px', fontSize: '13px', color: '#9CA3AF', textAlign: 'center' }}>Nama tidak ditemukan</div>
+                    ) : (
+                      filteredAnggota.map(a => (
+                        <div 
+                          key={a.id} 
+                          onClick={() => handleSelectMember(a.id, a.nama)}
+                          style={{ 
+                            padding: '12px 16px', 
+                            borderRadius: '10px', 
+                            fontSize: '14px', 
+                            fontWeight: 700, 
+                            color: '#111827', 
+                            cursor: 'pointer',
+                            background: anggotaId === a.id ? '#F5F3FF' : 'transparent',
+                            transition: 'background 0.2s'
+                          }}
+                          onMouseEnter={(e) => (e.currentTarget.style.background = '#F9FAFB')}
+                          onMouseLeave={(e) => (e.currentTarget.style.background = anggotaId === a.id ? '#F5F3FF' : 'transparent')}
+                        >
+                          {a.nama}
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </>
+              )}
+              
               <p style={{ fontSize: '12px', color: '#6B7280', marginTop: '8px', padding: '0 4px', lineHeight: 1.4, fontWeight: 600 }}>
                 <span style={{ fontWeight: 800, color: '#4F46E5' }}>💡 Nama tidak terdaftar?</span> Silakan hubungi admin di WhatsApp untuk sinkronisasi data anggota.
               </p>
