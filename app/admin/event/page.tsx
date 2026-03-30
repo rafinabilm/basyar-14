@@ -5,7 +5,7 @@ import { PageHeader } from '@/app/components/ui/PageHeader'
 import { Card } from '@/app/components/ui/Card'
 import { Pill } from '@/app/components/ui/Pill'
 import { EmptyState } from '@/app/components/ui/EmptyState'
-import { useEvents, insertEvent, hapusEvent } from '@/app/hooks/useGaleri'
+import { useEvents, insertEvent, updateEvent, hapusEvent } from '@/app/hooks/useGaleri'
 import { uploadFile } from '@/app/hooks/useUpload'
 import { useDialog } from '@/app/providers/DialogProvider'
 
@@ -20,27 +20,74 @@ export default function AdminEventPage() {
   const { events, loading, refetch } = useEvents()
   const { showAlert, showConfirm } = useDialog()
   const [showForm, setShowForm] = useState(false)
+  const [editingId, setEditingId] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
   const [form, setForm] = useState({ nama_event: '', tanggal: '', lokasi: '', deskripsi: '' })
   const [coverFile, setCoverFile] = useState<File | null>(null)
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null)
+  const [currentCoverUrl, setCurrentCoverUrl] = useState<string | null>(null)
 
   const today = new Date().toISOString().split('T')[0]
+
+  function resetForm() {
+    setShowForm(false)
+    setEditingId(null)
+    setForm({ nama_event: '', tanggal: '', lokasi: '', deskripsi: '' })
+    setCoverFile(null)
+    setPreviewUrl(null)
+    setCurrentCoverUrl(null)
+  }
+
+  function handleEdit(e: any) {
+    setEditingId(e.id)
+    setForm({
+      nama_event: e.nama_event,
+      tanggal: e.tanggal,
+      lokasi: e.lokasi || '',
+      deskripsi: e.deskripsi || ''
+    })
+    setCurrentCoverUrl(e.foto_cover_url || null)
+    setPreviewUrl(null)
+    setCoverFile(null)
+    setShowForm(true)
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      setCoverFile(file)
+      setPreviewUrl(URL.createObjectURL(file))
+    }
+  }
 
   async function handleSave() {
     if (!form.nama_event || !form.tanggal) return
     setSaving(true)
+    
     let foto_cover_url: string | undefined
     if (coverFile) {
       const url = await uploadFile(coverFile, 'basyar14/events')
       if (url) foto_cover_url = url
+    } else if (!previewUrl && !currentCoverUrl) {
+      foto_cover_url = ''
     }
-    const { error } = await insertEvent({ ...form, foto_cover_url })
+
+    const payload = { ...form, ...(foto_cover_url !== undefined ? { foto_cover_url } : {}) }
+
+    let res;
+    if (editingId) {
+      res = await updateEvent(editingId, payload)
+    } else {
+      res = await insertEvent(payload)
+    }
+
     setSaving(false)
-    if (error) { showAlert('Gagal: ' + error.message); return }
-    setShowForm(false)
-    setForm({ nama_event: '', tanggal: '', lokasi: '', deskripsi: '' })
-    setCoverFile(null)
+    if (res.error) { showAlert('Gagal: ' + res.error.message); return }
+    
+    resetForm()
     refetch()
+    showAlert(editingId ? 'Event berhasil diperbarui!' : 'Event berhasil dibuat!')
   }
 
   async function handleHapus(id: string, nama: string) {
@@ -60,7 +107,7 @@ export default function AdminEventPage() {
       <div style={{ padding: '32px 20px 8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <PageHeader title="Kelola Event" subtitle="Manajemen jadwal dan lokasi acara." />
         <button 
-          onClick={() => setShowForm(!showForm)} 
+          onClick={() => showForm ? resetForm() : setShowForm(true)} 
           style={{ 
             background: showForm ? '#F3F4F6' : '#6366F1', 
             color: showForm ? '#6B7280' : 'white', 
@@ -83,7 +130,9 @@ export default function AdminEventPage() {
       <div style={{ padding: '0 20px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
         {showForm && (
           <Card className="animate-in" style={{ display: 'flex', flexDirection: 'column', gap: '16px', border: '2px solid #EEF2FF' }}>
-            <div style={{ fontSize: '18px', fontWeight: 800, color: '#111827' }}>Buat Event Baru</div>
+            <div style={{ fontSize: '18px', fontWeight: 800, color: '#111827' }}>
+              {editingId ? 'Edit Event' : 'Buat Event Baru'}
+            </div>
             <div>
               <div style={{ fontSize: '11px', fontWeight: 800, letterSpacing: '0.5px', textTransform: 'uppercase', color: '#9CA3AF', marginBottom: '6px' }}>Nama Event</div>
               <input type="text" placeholder="Buka Puasa Bersama, Santunan, dll" value={form.nama_event} onChange={e => setForm(p => ({ ...p, nama_event: e.target.value }))} style={{ width: '100%', background: '#F9FAFB', border: '1px solid #F3F4F6', borderRadius: '12px', padding: '12px', fontSize: '14px', color: '#111827', fontFamily: 'Nunito, sans-serif', outline: 'none' }} />
@@ -98,14 +147,39 @@ export default function AdminEventPage() {
                 <input type="text" placeholder="Nama Tempat/Kota" value={form.lokasi} onChange={e => setForm(p => ({ ...p, lokasi: e.target.value }))} style={{ width: '100%', background: '#F9FAFB', border: '1px solid #F3F4F6', borderRadius: '12px', padding: '12px', fontSize: '13px', color: '#111827', fontFamily: 'Nunito, sans-serif', outline: 'none' }} />
               </div>
             </div>
-            <label style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '80px', border: '2px dashed #E5E7EB', borderRadius: '14px', background: '#F9FAFB', cursor: 'pointer', transition: 'all 0.2s' }}>
-              <input type="file" accept="image/*" style={{ display: 'none' }} onChange={e => setCoverFile(e.target.files?.[0] ?? null)} />
-              <div style={{ fontSize: '12px', color: coverFile ? '#6366F1' : '#9CA3AF', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '8px' }}>
-                {coverFile ? <span>✓ {coverFile.name}</span> : <>🖼️ <span>Upload Cover (Opsional)</span></>}
-              </div>
-            </label>
+            
+            <div style={{ position: 'relative' }}>
+              <div style={{ fontSize: '11px', fontWeight: 800, letterSpacing: '0.5px', textTransform: 'uppercase', color: '#9CA3AF', marginBottom: '6px' }}>Thumbnail Event</div>
+              <label style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '120px', border: '2px dashed #E5E7EB', borderRadius: '18px', background: '#F9FAFB', cursor: 'pointer', transition: 'all 0.2s', overflow: 'hidden', position: 'relative' }}>
+                <input type="file" accept="image/*" style={{ display: 'none' }} onChange={handleFileChange} />
+                
+                {previewUrl || currentCoverUrl ? (
+                  <div style={{ width: '100%', height: '140px', position: 'relative' }}>
+                    <img src={previewUrl || currentCoverUrl || ''} alt="Preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: 0, transition: 'opacity 0.2s' }} className="hover-overlay-upload">
+                      <span style={{ color: 'white', fontSize: '12px', fontWeight: 800 }}>Klik untuk Ganti</span>
+                    </div>
+                    {(previewUrl || currentCoverUrl) && (
+                      <button 
+                         onClick={(e) => { e.preventDefault(); e.stopPropagation(); setCoverFile(null); setPreviewUrl(null); setCurrentCoverUrl(null); }}
+                         style={{ position: 'absolute', top: '8px', right: '8px', background: 'rgba(0,0,0,0.5)', border: 'none', width: '24px', height: '24px', borderRadius: '50%', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', zIndex: 5 }}
+                      >
+                        ×
+                      </button>
+                    )}
+                  </div>
+                ) : (
+                  <div style={{ textAlign: 'center', padding: '20px' }}>
+                    <span style={{ fontSize: '24px' }}>🖼️</span>
+                    <div style={{ fontSize: '12px', color: '#9CA3AF', fontWeight: 700, marginTop: '8px' }}>Upload Cover (Opsional)</div>
+                    <div style={{ fontSize: '10px', color: '#CBD5E1', marginTop: '2px' }}>Rekomendasi Landscape 16:9</div>
+                  </div>
+                )}
+              </label>
+            </div>
+
             <button onClick={handleSave} disabled={saving || !form.nama_event || !form.tanggal} style={{ width: '100%', padding: '14px', borderRadius: '14px', background: '#6366F1', color: 'white', border: 'none', fontSize: '14px', fontWeight: 800, cursor: 'pointer', fontFamily: 'Nunito, sans-serif', boxShadow: '0 4px 12px rgba(99, 102, 241, 0.2)', opacity: (saving || !form.nama_event || !form.tanggal) ? 0.5 : 1 }}>
-              {saving ? 'Proses menyimpan...' : 'Simpan Event'}
+              {saving ? 'Proses menyimpan...' : editingId ? 'Simpan Perubahan' : 'Simpan Event'}
             </button>
           </Card>
         )}
@@ -149,28 +223,51 @@ export default function AdminEventPage() {
                       </div>
                     </div>
                   </div>
-                  <button 
-                    onClick={() => handleHapus(e.id, e.nama_event)} 
-                    style={{ 
-                      background: '#FFF1F2', 
-                      border: 'none', 
-                      cursor: 'pointer', 
-                      width: '32px', 
-                      height: '32px', 
-                      borderRadius: '10px', 
-                      display: 'flex', 
-                      alignItems: 'center', 
-                      justifyContent: 'center',
-                      flexShrink: 0,
-                      transition: 'all 0.2s'
-                    }}
-                  >
-                    <svg viewBox="0 0 24 24" fill="none" stroke="#EF4444" style={{ width: '16px', height: '16px' }} strokeWidth={2.5}>
-                      <path d="M3 6h18" />
-                      <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
-                      <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
-                    </svg>
-                  </button>
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    <button 
+                      onClick={() => handleEdit(e)} 
+                      style={{ 
+                        background: '#EEF2FF', 
+                        border: 'none', 
+                        cursor: 'pointer', 
+                        width: '32px', 
+                        height: '32px', 
+                        borderRadius: '10px', 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        justifyContent: 'center',
+                        flexShrink: 0,
+                        transition: 'all 0.2s'
+                      }}
+                    >
+                      <svg viewBox="0 0 24 24" fill="none" stroke="#6366F1" style={{ width: '16px', height: '16px' }} strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" />
+                        <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" />
+                      </svg>
+                    </button>
+                    <button 
+                      onClick={() => handleHapus(e.id, e.nama_event)} 
+                      style={{ 
+                        background: '#FFF1F2', 
+                        border: 'none', 
+                        cursor: 'pointer', 
+                        width: '32px', 
+                        height: '32px', 
+                        borderRadius: '10px', 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        justifyContent: 'center',
+                        flexShrink: 0,
+                        transition: 'all 0.2s'
+                      }}
+                    >
+                      <svg viewBox="0 0 24 24" fill="none" stroke="#EF4444" style={{ width: '16px', height: '16px' }} strokeWidth={2.5}>
+                        <path d="M3 6h18" />
+                        <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
+                        <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
+                      </svg>
+                    </button>
+                  </div>
                 </Card>
               )
             })}
