@@ -8,11 +8,11 @@ import { supabase } from '@/app/lib/supabase'
 const NAV_ITEMS = [
   {
     href: '/admin',
-    label: 'Dashboard',
+    label: 'Stats',
     icon: (active: boolean) => (
-      <svg viewBox="0 0 24 24" fill="none" stroke={active ? '#2E7D52' : '#A0B0A4'} style={{ width: '20px', height: '20px' }} strokeWidth={2}>
-        <rect x="3" y="3" width="7" height="7" /><rect x="14" y="3" width="7" height="7" />
-        <rect x="14" y="14" width="7" height="7" /><rect x="3" y="14" width="7" height="7" />
+      <svg viewBox="0 0 24 24" fill="none" stroke={active ? '#6366F1' : '#9CA3AF'} style={{ width: '20px', height: '20px' }} strokeWidth={2.5}>
+        <rect x="3" y="3" width="7" height="7" rx="1" /><rect x="14" y="3" width="7" height="7" rx="1" />
+        <rect x="14" y="14" width="7" height="7" rx="1" /><rect x="3" y="14" width="7" height="7" rx="1" />
       </svg>
     ),
   },
@@ -20,7 +20,7 @@ const NAV_ITEMS = [
     href: '/admin/kas',
     label: 'Kas',
     icon: (active: boolean) => (
-      <svg viewBox="0 0 24 24" fill="none" stroke={active ? '#2E7D52' : '#A0B0A4'} style={{ width: '20px', height: '20px' }} strokeWidth={2}>
+      <svg viewBox="0 0 24 24" fill="none" stroke={active ? '#6366F1' : '#9CA3AF'} style={{ width: '20px', height: '20px' }} strokeWidth={2.5}>
         <rect x="1" y="4" width="22" height="16" rx="2" /><line x1="1" y1="10" x2="23" y2="10" />
       </svg>
     ),
@@ -28,9 +28,8 @@ const NAV_ITEMS = [
   {
     href: '/admin/iuran',
     label: 'Iuran',
-    showBadge: true,
     icon: (active: boolean) => (
-      <svg viewBox="0 0 24 24" fill="none" stroke={active ? '#2E7D52' : '#A0B0A4'} style={{ width: '20px', height: '20px' }} strokeWidth={2}>
+      <svg viewBox="0 0 24 24" fill="none" stroke={active ? '#6366F1' : '#9CA3AF'} style={{ width: '20px', height: '20px' }} strokeWidth={2.5}>
         <line x1="12" y1="1" x2="12" y2="23" />
         <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
       </svg>
@@ -38,10 +37,10 @@ const NAV_ITEMS = [
   },
   {
     href: '/admin/anggota',
-    label: 'Lainnya',
+    label: 'More',
     icon: (active: boolean) => (
-      <svg viewBox="0 0 24 24" fill="none" stroke={active ? '#2E7D52' : '#A0B0A4'} style={{ width: '20px', height: '20px' }} strokeWidth={2}>
-        <circle cx="12" cy="12" r="1" /><circle cx="19" cy="12" r="1" /><circle cx="5" cy="12" r="1" />
+      <svg viewBox="0 0 24 24" fill="none" stroke={active ? '#6366F1' : '#9CA3AF'} style={{ width: '20px', height: '20px' }} strokeWidth={3}>
+        <circle cx="12" cy="12" r="1.5" /><circle cx="19" cy="12" r="1.5" /><circle cx="5" cy="12" r="1.5" />
       </svg>
     ),
   },
@@ -61,7 +60,7 @@ export function AdminNav() {
       .then(({ count }) => setPendingCount(count || 0))
   }, [])
 
-  const isActive = (href: string) => {
+  const isActiveTab = (href: string) => {
     if (href === '/admin/anggota') return LAINNYA_PATHS.includes(pathname)
     if (href === '/admin') return pathname === '/admin'
     return pathname === href
@@ -70,29 +69,90 @@ export function AdminNav() {
   return (
     <>
       {/* Admin Banner */}
-      <div style={{ background: '#2E7D52', padding: '6px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <span style={{ fontSize: '9px', fontFamily: 'monospace', color: 'white', letterSpacing: '1.5px', textTransform: 'uppercase' }}>⚙ Admin Mode</span>
-        <div style={{ display: 'flex', gap: '12px' }}>
-          <Link href="/" target="_blank" style={{ fontSize: '9px', color: 'rgba(255,255,255,0.7)', textDecoration: 'none', fontFamily: 'monospace' }}>Web Publik ↗</Link>
-          <Link href="/admin/settings" style={{ fontSize: '9px', color: 'rgba(255,255,255,0.7)', textDecoration: 'none', fontFamily: 'monospace' }}>Settings</Link>
+      <div style={{ 
+        background: '#6366F1', 
+        padding: '8px 20px', 
+        display: 'flex', 
+        justifyContent: 'space-between', 
+        alignItems: 'center',
+        boxShadow: '0 2px 4px rgba(99, 102, 241, 0.1)'
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <span style={{ fontSize: '10px', fontWeight: 900, color: 'white', letterSpacing: '1px', textTransform: 'uppercase', fontFamily: 'Space Grotesk, monospace' }}>ADMIN MODE</span>
+        </div>
+        <div style={{ display: 'flex', gap: '16px' }}>
+          <Link href="/" target="_blank" style={{ fontSize: '10px', color: 'rgba(255,255,255,0.85)', fontWeight: 800, textDecoration: 'none', fontFamily: 'Nunito, sans-serif' }}>Portal Publik ↗</Link>
+          <Link href="/admin/settings" style={{ fontSize: '10px', color: 'rgba(255,255,255,0.85)', fontWeight: 800, textDecoration: 'none', fontFamily: 'Nunito, sans-serif' }}>Settings</Link>
         </div>
       </div>
 
-      {/* Bottom Nav */}
-      <nav style={{ position: 'fixed', bottom: 0, left: '50%', transform: 'translateX(-50%)', width: '100%', maxWidth: '430px', background: '#FFFFFF', borderTop: '1px solid #E2D9C8', zIndex: 30 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-around', alignItems: 'center', padding: '8px 4px 20px' }}>
+      {/* Bottom Nav Admin */}
+      <nav style={{ 
+        position: 'fixed', 
+        bottom: 0, 
+        left: '50%', 
+        transform: 'translateX(-50%)', 
+        width: '100%', 
+        maxWidth: '430px', 
+        background: 'rgba(255, 255, 255, 0.9)', 
+        backdropFilter: 'blur(12px)',
+        borderTop: '1px solid #F3F4F6', 
+        zIndex: 30,
+        paddingBottom: 'env(safe-area-inset-bottom)'
+      }}>
+        <div style={{ display: 'flex', justifyContent: 'space-around', alignItems: 'center', padding: '10px 6px 20px' }}>
           {NAV_ITEMS.map((item) => {
-            const active = isActive(item.href)
-            const badgeNum = item.showBadge ? pendingCount : 0
+            const active = isActiveTab(item.href)
+            const showBadge = item.label === 'Iuran' && pendingCount > 0
             return (
-              <Link key={item.href} href={item.href} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '3px', padding: '4px 12px', borderRadius: '10px', textDecoration: 'none', background: active ? '#EAF6EE' : 'transparent', position: 'relative' }}>
-                {item.icon(active)}
-                {badgeNum > 0 && (
-                  <div style={{ position: 'absolute', top: '2px', right: '8px', minWidth: '14px', height: '14px', background: '#C0392B', borderRadius: '7px', border: '1.5px solid white', fontSize: '7px', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, padding: '0 2px' }}>
-                    {badgeNum > 9 ? '9+' : badgeNum}
+              <Link key={item.href} href={item.href} style={{ 
+                display: 'flex', 
+                flexDirection: 'column', 
+                alignItems: 'center', 
+                gap: '4px', 
+                padding: '6px 14px', 
+                borderRadius: '14px', 
+                textDecoration: 'none', 
+                background: active ? '#EEF2FF' : 'transparent', 
+                position: 'relative',
+                transition: 'all 0.2s'
+              }}>
+                <div style={{ 
+                  transform: active ? 'scale(1.1)' : 'scale(1)',
+                  transition: 'transform 0.2s'
+                }}>
+                  {item.icon(active)}
+                </div>
+                {showBadge && (
+                  <div style={{ 
+                    position: 'absolute', 
+                    top: '2px', 
+                    right: '10px', 
+                    minWidth: '16px', 
+                    height: '16px', 
+                    background: '#EF4444', 
+                    borderRadius: '8px', 
+                    border: '2px solid white', 
+                    fontSize: '8px', 
+                    color: 'white', 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    justifyContent: 'center', 
+                    fontWeight: 900, 
+                    padding: '0 2px',
+                    boxShadow: '0 2px 4px rgba(239, 68, 68, 0.2)'
+                  }}>
+                    {pendingCount > 9 ? '9+' : pendingCount}
                   </div>
                 )}
-                <span style={{ fontSize: '8px', fontWeight: 700, color: active ? '#2E7D52' : '#A0B0A4', fontFamily: 'Nunito, sans-serif' }}>{item.label}</span>
+                <span style={{ 
+                  fontSize: '9px', 
+                  fontWeight: active ? 800 : 600, 
+                  color: active ? '#6366F1' : '#9CA3AF', 
+                  fontFamily: 'Nunito, sans-serif' 
+                }}>
+                  {item.label}
+                </span>
               </Link>
             )
           })}
@@ -101,3 +161,4 @@ export function AdminNav() {
     </>
   )
 }
+

@@ -22,7 +22,7 @@ export const metadata: Metadata = {
   title: 'Basyar-14 | PP Al-Hamid',
   description: 'Website resmi Angkatan Basyar-14 Pondok Pesantren Al-Hamid',
   icons: {
-    icon: 'https://api.iconify.design/material-symbols:b-circle-outline.svg?color=%232E7D52',
+    icon: 'https://api.iconify.design/material-symbols:b-circle-outline.svg?color=%236366F1',
   },
   robots: {
     index: false,
@@ -36,7 +36,7 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 1,
   userScalable: false,
-  themeColor: '#2E7D52',
+  themeColor: '#6366F1',
 }
 
 export default function RootLayout({

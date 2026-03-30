@@ -3,11 +3,12 @@
 import { useState } from 'react'
 import { PageHeader } from '@/app/components/ui/PageHeader'
 import { Card } from '@/app/components/ui/Card'
+import { EmptyState } from '@/app/components/ui/EmptyState'
 import { useEvents, useFotoByEvent, insertFoto, hapusFoto } from '@/app/hooks/useGaleri'
 import { uploadFile } from '@/app/hooks/useUpload'
 import { useDialog } from '@/app/providers/DialogProvider'
 
-function AlbumCard({ event }: { event: any }) {
+function AlbumCard({ event, index }: { event: any, index: number }) {
   const { foto, loading, refetch } = useFotoByEvent(event.id)
   const { showAlert } = useDialog()
   const [uploading, setUploading] = useState(false)
@@ -30,28 +31,60 @@ function AlbumCard({ event }: { event: any }) {
   }
 
   return (
-    <Card>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-        <span style={{ fontSize: '13px', fontWeight: 700, color: '#1C2B22' }}>{event.nama_event}</span>
-        <span style={{ fontSize: '10px', color: '#A0B0A4' }}>{loading ? '...' : `${foto.length} foto`}</span>
+    <Card style={{ animationDelay: `${index * 0.1}s`, padding: '16px' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+        <div style={{ flex: 1 }}>
+          <div style={{ fontSize: '15px', fontWeight: 800, color: '#111827' }}>{event.nama_event}</div>
+          <div style={{ fontSize: '12px', color: '#9CA3AF', marginTop: '2px', fontWeight: 500 }}>{new Date(event.tanggal).getFullYear()}</div>
+        </div>
+        <div style={{ textAlign: 'right' }}>
+           <span style={{ fontSize: '11px', fontWeight: 800, color: '#6366F1', background: '#EEF2FF', padding: '4px 10px', borderRadius: '20px' }}>
+            {loading ? '...' : `${foto.length} Foto`}
+           </span>
+        </div>
       </div>
 
       {foto.length > 0 && (
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: '4px', marginBottom: '10px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(64px, 1fr))', gap: '8px', marginBottom: '16px' }}>
           {foto.map((f, i) => (
-            <div key={f.id} style={{ position: 'relative' }}>
-              <div style={{ height: '52px', borderRadius: '8px', overflow: 'hidden', background: '#E2D9C8' }}>
+            <div key={f.id} style={{ position: 'relative', width: '100%', aspectRatio: '1/1' }}>
+              <div style={{ width: '100%', height: '100%', borderRadius: '12px', overflow: 'hidden', background: '#F3F4F6', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
                 <img src={f.foto_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} loading="lazy" />
               </div>
-              <button onClick={() => handleHapus(f.id)} style={{ position: 'absolute', top: '3px', right: '3px', width: '16px', height: '16px', background: 'rgba(192,57,43,0.85)', borderRadius: '50%', border: 'none', color: 'white', fontSize: '10px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700 }}>×</button>
+              <button 
+                onClick={() => handleHapus(f.id)} 
+                style={{ 
+                  position: 'absolute', 
+                  top: '-4px', 
+                  right: '-4px', 
+                  width: '20px', 
+                  height: '20px', 
+                  background: '#EF4444', 
+                  borderRadius: '50%', 
+                  border: '2px solid white', 
+                  color: 'white', 
+                  fontSize: '12px', 
+                  cursor: 'pointer', 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'center', 
+                  fontWeight: 800,
+                  boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+                }}
+              >
+                ×
+              </button>
             </div>
           ))}
         </div>
       )}
 
-      <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '44px', border: '2px dashed #E2D9C8', borderRadius: '10px', background: '#FBF8F3', cursor: 'pointer', gap: '6px' }}>
+      <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '52px', border: '2px dashed #E5E7EB', borderRadius: '14px', background: '#F9FAFB', cursor: 'pointer', gap: '8px', transition: 'all 0.2s' }}>
         <input type="file" multiple accept="image/*" style={{ display: 'none' }} onChange={e => handleUpload(e.target.files)} disabled={uploading} />
-        <span style={{ fontSize: '11px', fontWeight: 700, color: '#2E7D52' }}>{uploading ? 'Mengupload...' : '+ Upload Foto'}</span>
+        <div style={{ fontSize: '13px', fontWeight: 800, color: '#6366F1', display: 'flex', alignItems: 'center', gap: '6px' }}>
+          <span>{uploading ? '⌛' : '📸'}</span>
+          <span>{uploading ? 'Sedang Mengupload...' : 'Tambah Koleksi Foto'}</span>
+        </div>
       </label>
     </Card>
   )
@@ -61,20 +94,30 @@ export default function AdminGaleriPage() {
   const { events, loading } = useEvents()
 
   return (
-    <main style={{ paddingBottom: '100px' }}>
-      <div style={{ padding: '20px 16px 8px' }}>
-        <PageHeader title="Kelola Galeri" subtitle="Upload foto per event di bawah ini." />
+    <main style={{ paddingBottom: '120px' }}>
+      <div style={{ padding: '32px 20px 8px' }}>
+        <PageHeader title="Kelola Galeri" subtitle="Upload momen kebersamaan di tiap event." />
       </div>
 
-      <div style={{ padding: '0 16px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
+      <div style={{ padding: '0 20px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+        <div className="animate-in" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <p style={{ fontSize: '11px', fontWeight: 800, letterSpacing: '1px', textTransform: 'uppercase', color: '#9CA3AF' }}>Daftar Event</p>
+          <div style={{ width: '40px', height: '1px', background: '#F3F4F6' }} />
+        </div>
+
         {loading ? (
-          <div style={{ textAlign: 'center', padding: '32px', color: '#A0B0A4', fontSize: '12px' }}>Memuat...</div>
+          <div style={{ textAlign: 'center', padding: '48px', color: '#9CA3AF', fontSize: '14px' }}>Memuat data galeri...</div>
         ) : events.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '32px', color: '#A0B0A4', fontSize: '12px' }}>Buat event dulu sebelum upload foto.</div>
+          <EmptyState
+            icon={<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" style={{ width: '32px', height: '32px' }} strokeWidth={2}><rect x="3" y="3" width="18" height="18" rx="2" /><circle cx="8.5" cy="8.5" r="1.5" /><polyline points="21 15 16 10 5 21" /></svg>}
+            title="Event masih kosong"
+            description="Buat event terlebih dahulu di modul Event."
+          />
         ) : (
-          events.map(e => <AlbumCard key={e.id} event={e} />)
+          events.map((e, index) => <AlbumCard key={e.id} event={e} index={index} />)
         )}
       </div>
     </main>
   )
 }
+

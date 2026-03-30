@@ -11,16 +11,17 @@ export function Card({ children, className = '', onClick, style }: CardProps) {
   return (
     <div
       onClick={onClick}
+      className={`animate-in ${className}`}
       style={{
         background: '#FFFFFF',
-        borderRadius: '14px',
-        padding: '12px',
-        border: '1px solid #E2D9C8',
-        transition: 'transform 0.15s',
+        borderRadius: '16px',
+        padding: '16px',
+        border: '1px solid #F3F4F6',
+        transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
         cursor: onClick ? 'pointer' : 'default',
+        boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.05)',
         ...style,
       }}
-      className={className}
     >
       {children}
     </div>
@@ -31,17 +32,18 @@ export function SurfCard({ children, className = '', onClick, style }: CardProps
   return (
     <div
       onClick={onClick}
+      className={`animate-in ${className}`}
       style={{
-        background: '#F5F0E8',
-        borderRadius: '14px',
-        padding: '12px',
-        border: '1px solid #E2D9C8',
+        background: '#F9FAFB',
+        borderRadius: '16px',
+        padding: '16px',
+        border: '1px solid #F3F4F6',
         cursor: onClick ? 'pointer' : 'default',
         ...style,
       }}
-      className={className}
     >
       {children}
     </div>
   )
 }
+

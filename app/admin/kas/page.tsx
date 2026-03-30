@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { PageHeader } from '@/app/components/ui/PageHeader'
 import { Card } from '@/app/components/ui/Card'
+import { EmptyState } from '@/app/components/ui/EmptyState'
 import { useKas, insertTransaksi } from '@/app/hooks/useKas'
 import { uploadFile } from '@/app/hooks/useUpload'
 import { useDialog } from '@/app/providers/DialogProvider'
@@ -37,106 +38,148 @@ export default function AdminKasPage() {
   }
 
   return (
-    <main style={{ paddingBottom: '100px' }}>
-      <div style={{ padding: '20px 16px 8px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-        <PageHeader title="Kelola Kas" />
-        <button onClick={() => setShowForm(!showForm)} style={{ background: '#2E7D52', color: 'white', border: 'none', borderRadius: '20px', padding: '8px 16px', fontSize: '11px', fontWeight: 700, cursor: 'pointer', fontFamily: 'Nunito, sans-serif', flexShrink: 0 }}>
-          {showForm ? '× Tutup' : '+ Tambah'}
+    <main style={{ paddingBottom: '120px' }}>
+      <div style={{ padding: '32px 20px 8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <PageHeader title="Kelola Kas" subtitle="Monitoring dan pencatatan kas." />
+        <button 
+          onClick={() => setShowForm(!showForm)} 
+          style={{ 
+            background: showForm ? '#F3F4F6' : '#6366F1', 
+            color: showForm ? '#6B7280' : 'white', 
+            border: 'none', 
+            borderRadius: '12px', 
+            padding: '10px 18px', 
+            fontSize: '13px', 
+            fontWeight: 800, 
+            cursor: 'pointer', 
+            fontFamily: 'Nunito, sans-serif', 
+            flexShrink: 0,
+            boxShadow: showForm ? 'none' : '0 4px 12px rgba(99, 102, 241, 0.2)',
+            transition: 'all 0.2s'
+          }}
+        >
+          {showForm ? 'Batal' : '+ Tambah'}
         </button>
       </div>
 
-      <div style={{ padding: '0 16px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
-        {/* Saldo */}
-        <div style={{ borderRadius: '20px', background: 'linear-gradient(135deg, #1a5c3a 0%, #2E7D52 55%, #3a9465 100%)', padding: '20px', position: 'relative', overflow: 'hidden' }}>
-          <div style={{ position: 'absolute', top: '-30px', right: '-20px', width: '120px', height: '120px', background: 'rgba(255,255,255,0.06)', borderRadius: '50%' }} />
+      <div style={{ padding: '0 20px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+        {/* Saldo Card */}
+        <div className="animate-in" style={{ borderRadius: '24px', background: 'linear-gradient(135deg, #4f46e5 0%, #6366f1 55%, #818cf8 100%)', padding: '24px', position: 'relative', overflow: 'hidden', boxShadow: '0 10px 15px -3px rgba(79, 70, 229, 0.2)' }}>
+          <div style={{ position: 'absolute', top: '-30px', right: '-20px', width: '120px', height: '120px', background: 'rgba(255,255,255,0.08)', borderRadius: '50%' }} />
           <div style={{ position: 'relative', zIndex: 1 }}>
-            <div style={{ fontSize: '9px', color: 'rgba(255,255,255,0.6)', fontFamily: 'monospace', letterSpacing: '1.5px', textTransform: 'uppercase', marginBottom: '6px' }}>Saldo Kas</div>
-            <div style={{ fontSize: '30px', fontWeight: 700, color: 'white', fontFamily: 'Space Grotesk, monospace', letterSpacing: '-1px', marginBottom: '14px' }}>{fmt(saldo)}</div>
-            <div style={{ height: '1px', background: 'rgba(255,255,255,0.2)', marginBottom: '12px' }} />
-            <div style={{ display: 'flex' }}>
-              <div style={{ flex: 1 }}>
-                <div style={{ fontSize: '9px', color: 'rgba(255,255,255,0.55)', fontFamily: 'monospace', textTransform: 'uppercase' }}>Masuk</div>
-                <div style={{ fontSize: '14px', fontWeight: 700, color: '#7FEBA1', fontFamily: 'Space Grotesk, monospace', marginTop: '2px' }}>{fmt(totalMasuk)}</div>
+            <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.7)', fontWeight: 800, letterSpacing: '1px', textTransform: 'uppercase', marginBottom: '8px' }}>Total Kas Saat Ini</div>
+            <div style={{ fontSize: '36px', fontWeight: 800, color: 'white', fontFamily: 'Space Grotesk, monospace', letterSpacing: '-1.5px', marginBottom: '20px' }}>{fmt(saldo)}</div>
+            <div style={{ height: '1px', background: 'rgba(255,255,255,0.15)', marginBottom: '16px' }} />
+            <div style={{ display: 'flex', gap: '24px' }}>
+              <div>
+                <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.6)', fontWeight: 800, textTransform: 'uppercase' }}>Pemasukan</div>
+                <div style={{ fontSize: '16px', fontWeight: 800, color: '#A7F3D0', fontFamily: 'Space Grotesk, monospace', marginTop: '2px' }}>{fmt(totalMasuk).replace('Rp', '').trim()}</div>
               </div>
-              <div style={{ width: '1px', background: 'rgba(255,255,255,0.15)', margin: '0 14px' }} />
-              <div style={{ flex: 1 }}>
-                <div style={{ fontSize: '9px', color: 'rgba(255,255,255,0.55)', fontFamily: 'monospace', textTransform: 'uppercase' }}>Keluar</div>
-                <div style={{ fontSize: '14px', fontWeight: 700, color: '#FFB3A7', fontFamily: 'Space Grotesk, monospace', marginTop: '2px' }}>{fmt(totalKeluar)}</div>
+              <div style={{ width: '1px', background: 'rgba(255,255,255,0.1)' }} />
+              <div>
+                <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.6)', fontWeight: 800, textTransform: 'uppercase' }}>Pengeluaran</div>
+                <div style={{ fontSize: '16px', fontWeight: 800, color: '#FECACA', fontFamily: 'Space Grotesk, monospace', marginTop: '2px' }}>{fmt(totalKeluar).replace('Rp', '').trim()}</div>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Form */}
+        {/* Form Add Transaction */}
         {showForm && (
-          <Card style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-            <div style={{ fontSize: '14px', fontWeight: 700, color: '#1C2B22' }}>Tambah Transaksi</div>
-            {[
-              { label: 'Tanggal', key: 'tanggal', type: 'date' },
-              { label: 'Keterangan', key: 'keterangan', type: 'text' },
-              { label: 'Jumlah (Rp)', key: 'jumlah', type: 'number' },
-            ].map(f => (
-              <div key={f.key}>
-                <div style={{ fontSize: '9px', fontFamily: 'monospace', letterSpacing: '1px', textTransform: 'uppercase', color: '#A0B0A4', marginBottom: '5px' }}>{f.label}</div>
-                <input type={f.type} value={(form as any)[f.key]} onChange={e => setForm(p => ({ ...p, [f.key]: e.target.value }))} style={{ width: '100%', background: '#FBF8F3', border: '1px solid #E2D9C8', borderRadius: '10px', padding: '10px 12px', fontSize: '12px', color: '#1C2B22', fontFamily: 'Nunito, sans-serif', outline: 'none' }} />
+          <Card className="animate-in" style={{ display: 'flex', flexDirection: 'column', gap: '16px', border: '2px solid #EEF2FF' }}>
+            <div style={{ fontSize: '18px', fontWeight: 800, color: '#111827' }}>Catat Transaksi</div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+              <div>
+                <div style={{ fontSize: '11px', fontWeight: 800, letterSpacing: '0.5px', textTransform: 'uppercase', color: '#9CA3AF', marginBottom: '6px' }}>Tanggal</div>
+                <input type="date" value={form.tanggal} onChange={e => setForm(p => ({ ...p, tanggal: e.target.value }))} style={{ width: '100%', background: '#F9FAFB', border: '1px solid #F3F4F6', borderRadius: '12px', padding: '12px', fontSize: '13px', color: '#111827', fontFamily: 'Nunito, sans-serif', outline: 'none' }} />
               </div>
-            ))}
-            <div>
-              <div style={{ fontSize: '9px', fontFamily: 'monospace', letterSpacing: '1px', textTransform: 'uppercase', color: '#A0B0A4', marginBottom: '5px' }}>Jenis</div>
-              <select value={form.jenis} onChange={e => setForm(p => ({ ...p, jenis: e.target.value }))} style={{ width: '100%', background: '#FBF8F3', border: '1px solid #E2D9C8', borderRadius: '10px', padding: '10px 12px', fontSize: '12px', color: '#1C2B22', fontFamily: 'Nunito, sans-serif', outline: 'none' }}>
-                <option value="pemasukan">Pemasukan</option>
-                <option value="pengeluaran">Pengeluaran</option>
-              </select>
+              <div>
+                <div style={{ fontSize: '11px', fontWeight: 800, letterSpacing: '0.5px', textTransform: 'uppercase', color: '#9CA3AF', marginBottom: '6px' }}>Jenis</div>
+                <select value={form.jenis} onChange={e => setForm(p => ({ ...p, jenis: e.target.value }))} style={{ width: '100%', background: '#F9FAFB', border: '1px solid #F3F4F6', borderRadius: '12px', padding: '12px', fontSize: '13px', color: '#111827', fontFamily: 'Nunito, sans-serif', outline: 'none' }}>
+                  <option value="pemasukan">Pemasukan (+)</option>
+                  <option value="pengeluaran">Pengeluaran (-)</option>
+                </select>
+              </div>
             </div>
             <div>
-              <div style={{ fontSize: '9px', fontFamily: 'monospace', letterSpacing: '1px', textTransform: 'uppercase', color: '#A0B0A4', marginBottom: '5px' }}>Kategori</div>
-              <select value={form.kategori} onChange={e => setForm(p => ({ ...p, kategori: e.target.value }))} style={{ width: '100%', background: '#FBF8F3', border: '1px solid #E2D9C8', borderRadius: '10px', padding: '10px 12px', fontSize: '12px', color: '#1C2B22', fontFamily: 'Nunito, sans-serif', outline: 'none' }}>
-                <option value="iuran">Iuran</option>
-                <option value="konsumsi">Konsumsi</option>
-                <option value="hadiah_guru">Hadiah Guru</option>
-                <option value="transportasi">Transportasi</option>
-                <option value="lainnya">Lainnya</option>
-              </select>
+              <div style={{ fontSize: '11px', fontWeight: 800, letterSpacing: '0.5px', textTransform: 'uppercase', color: '#9CA3AF', marginBottom: '6px' }}>Keterangan Transaksi</div>
+              <input type="text" placeholder="Gaji marbot, Beli konsumsi, dll" value={form.keterangan} onChange={e => setForm(p => ({ ...p, keterangan: e.target.value }))} style={{ width: '100%', background: '#F9FAFB', border: '1px solid #F3F4F6', borderRadius: '12px', padding: '12px', fontSize: '14px', color: '#111827', fontFamily: 'Nunito, sans-serif', outline: 'none' }} />
             </div>
-            <label style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '72px', border: '2px dashed #E2D9C8', borderRadius: '10px', background: '#FBF8F3', cursor: 'pointer' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '12px' }}>
+              <div>
+                <div style={{ fontSize: '11px', fontWeight: 800, letterSpacing: '0.5px', textTransform: 'uppercase', color: '#9CA3AF', marginBottom: '6px' }}>Nominal (Rp)</div>
+                <input type="number" value={form.jumlah} onChange={e => setForm(p => ({ ...p, jumlah: e.target.value }))} style={{ width: '100%', background: '#F9FAFB', border: '1px solid #F3F4F6', borderRadius: '12px', padding: '12px', fontSize: '16px', fontWeight: 800, color: '#111827', fontFamily: 'Space Grotesk, monospace', outline: 'none' }} />
+              </div>
+              <div>
+                <div style={{ fontSize: '11px', fontWeight: 800, letterSpacing: '0.5px', textTransform: 'uppercase', color: '#9CA3AF', marginBottom: '6px' }}>Kategori</div>
+                <select value={form.kategori} onChange={e => setForm(p => ({ ...p, kategori: e.target.value }))} style={{ width: '100%', background: '#F9FAFB', border: '1px solid #F3F4F6', borderRadius: '12px', padding: '12px', fontSize: '13px', color: '#111827', fontFamily: 'Nunito, sans-serif', outline: 'none' }}>
+                  <option value="iuran">Iuran</option>
+                  <option value="konsumsi">Konsumsi</option>
+                  <option value="hadiah_guru">Hadiah Guru</option>
+                  <option value="transportasi">Transportasi</option>
+                  <option value="lainnya">Lainnya</option>
+                </select>
+              </div>
+            </div>
+            <label style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '80px', border: '2px dashed #E5E7EB', borderRadius: '14px', background: '#F9FAFB', cursor: 'pointer', transition: 'all 0.2s' }}>
               <input type="file" accept="image/*" style={{ display: 'none' }} onChange={e => setFile(e.target.files?.[0] ?? null)} />
-              <span style={{ fontSize: '10px', color: file ? '#2E7D52' : '#A0B0A4', fontWeight: file ? 700 : 400 }}>{file ? `✓ ${file.name}` : '📎 Upload bukti (opsional)'}</span>
+              <div style={{ fontSize: '12px', color: file ? '#6366F1' : '#9CA3AF', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                {file ? <span>✓ {file.name}</span> : <>📸 <span>Upload bukti (Opsional)</span></>}
+              </div>
             </label>
-            <button onClick={handleSave} disabled={saving || !form.jumlah || !form.keterangan} style={{ width: '100%', padding: '12px', borderRadius: '12px', background: '#2E7D52', color: 'white', border: 'none', fontSize: '13px', fontWeight: 700, cursor: 'pointer', fontFamily: 'Nunito, sans-serif', opacity: (saving || !form.jumlah || !form.keterangan) ? 0.5 : 1 }}>
-              {saving ? 'Menyimpan...' : 'Simpan Transaksi'}
+            <button onClick={handleSave} disabled={saving || !form.jumlah || !form.keterangan} style={{ width: '100%', padding: '14px', borderRadius: '14px', background: '#6366F1', color: 'white', border: 'none', fontSize: '14px', fontWeight: 800, cursor: 'pointer', fontFamily: 'Nunito, sans-serif', boxShadow: '0 4px 12px rgba(99, 102, 241, 0.2)', opacity: (saving || !form.jumlah || !form.keterangan) ? 0.5 : 1 }}>
+              {saving ? 'Proses menyimpan...' : 'Simpan Transaksi'}
             </button>
           </Card>
         )}
 
-        {/* List */}
-        {loading ? (
-          <div style={{ textAlign: 'center', padding: '32px', color: '#A0B0A4', fontSize: '12px' }}>Memuat...</div>
-        ) : transaksi.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '32px', color: '#A0B0A4', fontSize: '12px' }}>Belum ada transaksi. Tambahkan yang pertama!</div>
-        ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-            {transaksi.map(t => (
-              <Card key={t.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-                  <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: t.jenis === 'pemasukan' ? '#EAF7EE' : '#EAF6EE', border: `1px solid ${t.jenis === 'pemasukan' ? '#B8E0C4' : '#D4EDDE'}`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                    <svg viewBox="0 0 24 24" fill="none" stroke={t.jenis === 'pemasukan' ? '#1E7B3A' : '#2E7D52'} style={{ width: '16px', height: '16px' }} strokeWidth={2.5}>
-                      {t.jenis === 'pemasukan' ? <><line x1="12" y1="5" x2="12" y2="19" /><polyline points="19 12 12 19 5 12" /></> : <><line x1="12" y1="19" x2="12" y2="5" /><polyline points="5 12 12 5 19 12" /></>}
-                    </svg>
-                  </div>
-                  <div>
-                    <div style={{ fontSize: '12px', fontWeight: 700, color: '#1C2B22' }}>{t.keterangan}</div>
-                    <div style={{ fontSize: '9px', color: '#A0B0A4' }}>{new Date(t.tanggal).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}</div>
-                    {t.foto_bukti_url && <a href={t.foto_bukti_url} target="_blank" rel="noreferrer" style={{ fontSize: '9px', fontWeight: 700, color: '#2E7D52', background: '#EAF6EE', padding: '2px 8px', borderRadius: '20px', display: 'inline-block', textDecoration: 'none', marginTop: '2px' }}>Bukti</a>}
-                  </div>
-                </div>
-                <span style={{ fontSize: '12px', fontWeight: 700, color: t.jenis === 'pemasukan' ? '#1E7B3A' : '#C0392B', fontFamily: 'Space Grotesk, monospace' }}>
-                  {t.jenis === 'pemasukan' ? '+' : '-'}{fmt(t.jumlah)}
-                </span>
-              </Card>
-            ))}
+        {/* List Riwayat */}
+        <div>
+          <div className="animate-in" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+            <p style={{ fontSize: '11px', fontWeight: 800, letterSpacing: '1px', textTransform: 'uppercase', color: '#9CA3AF' }}>Riwayat Transaksi</p>
+            <div style={{ width: '40px', height: '1px', background: '#F3F4F6' }} />
           </div>
-        )}
+          {loading ? (
+            <div style={{ textAlign: 'center', padding: '48px', color: '#9CA3AF', fontSize: '14px' }}>Memuat data...</div>
+          ) : transaksi.length === 0 ? (
+            <EmptyState
+              icon={<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" style={{ width: '32px', height: '32px' }} strokeWidth={2}><rect x="1" y="4" width="22" height="16" rx="2" /><line x1="1" y1="10" x2="23" y2="10" /></svg>}
+              title="Kas masih kosong"
+              description="Belum ada catatan aktivitas keuangan."
+            />
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              {transaksi.map((t, i) => (
+                <Card key={t.id} style={{ animationDelay: `${i * 0.05}s`, display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '14px' }}>
+                  <div style={{ display: 'flex', gap: '14px', alignItems: 'center' }}>
+                    <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: t.jenis === 'pemasukan' ? '#ECFDF5' : '#FFF1F2', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                      <svg viewBox="0 0 24 24" fill="none" stroke={t.jenis === 'pemasukan' ? '#10B981' : '#EF4444'} style={{ width: '18px', height: '18px' }} strokeWidth={2.5}>
+                        {t.jenis === 'pemasukan' ? <path d="M7 10l5 5 5-5" /> : <path d="M17 14l-5-5-5 5" />}
+                      </svg>
+                    </div>
+                    <div>
+                      <div style={{ fontSize: '14px', fontWeight: 700, color: '#111827' }}>{t.keterangan}</div>
+                      <div style={{ fontSize: '12px', color: '#9CA3AF', marginTop: '2px' }}>{new Date(t.tanggal).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}</div>
+                      {t.foto_bukti_url && (
+                        <a href={t.foto_bukti_url} target="_blank" rel="noreferrer" style={{ fontSize: '10px', fontWeight: 800, color: '#6366F1', background: '#EEF2FF', padding: '3px 8px', borderRadius: '20px', display: 'inline-block', textDecoration: 'none', marginTop: '6px' }}>
+                          📄 Bukti
+                        </a>
+                      )}
+                    </div>
+                  </div>
+                  <div style={{ textAlign: 'right' }}>
+                    <div style={{ fontSize: '14px', fontWeight: 800, color: t.jenis === 'pemasukan' ? '#10B981' : '#EF4444', fontFamily: 'Space Grotesk, monospace' }}>
+                      {t.jenis === 'pemasukan' ? '+' : '-'}{fmt(t.jumlah).replace('Rp', '').trim()}
+                    </div>
+                    <div style={{ fontSize: '10px', color: '#9CA3AF', fontWeight: 600, textTransform: 'uppercase' }}>{t.jenis === 'pemasukan' ? 'In' : 'Out'}</div>
+                  </div>
+                </Card>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     </main>
   )
 }
+

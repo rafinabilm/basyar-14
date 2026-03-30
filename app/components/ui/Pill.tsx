@@ -4,28 +4,27 @@ interface PillProps {
   styleOverride?: React.CSSProperties
 }
 
-const STYLES = {
-  green: { background: '#EAF7EE', color: '#1E7B3A' },
-  accent: { background: '#EAF6EE', color: '#2E7D52' },
-  warn: { background: '#FFFBEB', color: '#B8860B' },
-  err: { background: '#FEE2E2', color: '#C0392B' },
-  muted: { background: '#F5F0E8', color: '#5A6E5E' },
+const VARIANTS = {
+  green: { background: '#EEF2FF', border: '#E0E7FF', text: '#6366F1' },
+  accent: { background: '#F5F3FF', border: '#EDE9FE', text: '#8B5CF6' },
+  muted: { background: '#F3F4F6', border: '#E5E7EB', text: '#6B7280' },
 }
 
-export function Pill({ label, variant = 'accent', styleOverride = {} }: PillProps) {
+export function Pill({ label, variant = 'muted', styleOverride = {} }: PillProps) {
+  const v = VARIANTS[variant as keyof typeof VARIANTS] || VARIANTS.muted
   return (
-    <span
-      style={{
-        display: 'inline-block',
-        fontSize: '9px',
-        fontWeight: 700,
-        padding: '2px 8px',
-        borderRadius: '20px',
-        fontFamily: 'Nunito, sans-serif',
-        ...STYLES[variant],
-        ...styleOverride,
-      }}
-    >
+    <span style={{
+      display: 'inline-block',
+      padding: '3px 10px',
+      borderRadius: '20px',
+      fontSize: '10px',
+      fontWeight: 700,
+      background: v.background,
+      border: `1px solid ${v.border}`,
+      color: v.text,
+      fontFamily: 'Nunito, sans-serif',
+      ...styleOverride
+    }}>
       {label}
     </span>
   )

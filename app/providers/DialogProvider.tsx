@@ -53,51 +53,52 @@ export function DialogProvider({ children }: { children: ReactNode }) {
       
       {isOpen && options && (
         <div 
-          style={{ position: 'fixed', inset: 0, background: 'rgba(20, 40, 28, 0.75)', backdropFilter: 'blur(4px)', zIndex: 99999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px', animation: 'fadeIn 0.2s ease-out' }} 
+          style={{ position: 'fixed', inset: 0, background: 'rgba(15, 23, 42, 0.4)', backdropFilter: 'blur(8px)', zIndex: 99999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px', animation: 'fadeIn 0.2s ease-out' }} 
           onClick={() => options.type === 'alert' ? handleClose(true) : handleClose(false)}
         >
           <div 
-            style={{ background: 'white', borderRadius: '24px', padding: '24px', width: '100%', maxWidth: '340px', boxShadow: '0 20px 40px rgba(0,0,0,0.2)', animation: 'slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1)' }} 
+            style={{ background: 'white', borderRadius: '32px', padding: '32px', width: '100%', maxWidth: '360px', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.2)', animation: 'slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1)' }} 
             onClick={e => e.stopPropagation()}
           >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', gap: '16px', marginBottom: '24px' }}>
               {options.type === 'confirm' ? (
-                <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: options.isDestructive ? '#FEE2E2' : '#FFFBEB', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                  <svg viewBox="0 0 24 24" fill="none" stroke={options.isDestructive ? '#C0392B' : '#B8860B'} style={{ width: '20px', height: '20px' }} strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+                <div style={{ width: '56px', height: '56px', borderRadius: '20px', background: options.isDestructive ? '#FEF2F2' : '#FFFBEB', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <svg viewBox="0 0 24 24" fill="none" stroke={options.isDestructive ? '#EF4444' : '#F59E0B'} style={{ width: '28px', height: '28px' }} strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
                     <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" />
                   </svg>
                 </div>
               ) : (
-                <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: '#EAF7EE', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                  <svg viewBox="0 0 24 24" fill="none" stroke="#1E7B3A" style={{ width: '20px', height: '20px' }} strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+                <div style={{ width: '56px', height: '56px', borderRadius: '20px', background: '#EEF2FF', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="#6366F1" style={{ width: '28px', height: '28px' }} strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
                     <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" /><polyline points="22 4 12 14.01 9 11.01" />
                   </svg>
                 </div>
               )}
-              <h3 style={{ fontSize: '18px', fontWeight: 800, color: '#1C2B22', letterSpacing: '-0.3px', margin: 0 }}>{options.title}</h3>
+              <div>
+                <h3 style={{ fontSize: '20px', fontWeight: 800, color: '#111827', margin: '0 0 8px 0', fontFamily: 'Space Grotesk, sans-serif' }}>{options.title}</h3>
+                <p style={{ fontSize: '14px', color: '#6B7280', margin: 0, lineHeight: 1.6, fontWeight: 500 }}>
+                  {options.message.split('\n').map((line, i) => <React.Fragment key={i}>{line}<br/></React.Fragment>)}
+                </p>
+              </div>
             </div>
             
-            <div style={{ fontSize: '14px', color: '#5A6E5E', marginBottom: '24px', lineHeight: 1.6, paddingLeft: '4px' }}>
-              {options.message.split('\n').map((line, i) => <React.Fragment key={i}>{line}<br/></React.Fragment>)}
-            </div>
-            
-            <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', paddingTop: '8px', borderTop: '1px solid #E2D9C8' }}>
+            <div style={{ display: 'flex', gap: '12px' }}>
               {options.type === 'confirm' && (
-                <button onClick={() => handleClose(false)} style={{ flex: 1, padding: '12px 16px', borderRadius: '14px', background: '#F5F0E8', color: '#5A6E5E', border: 'none', fontSize: '14px', fontWeight: 700, cursor: 'pointer', fontFamily: 'Nunito, sans-serif' }}>
+                <button onClick={() => handleClose(false)} style={{ flex: 1, padding: '14px', borderRadius: '16px', background: '#F9FAFB', color: '#6B7280', border: '1px solid #F3F4F6', fontSize: '14px', fontWeight: 800, cursor: 'pointer', fontFamily: 'Nunito, sans-serif', transition: 'all 0.2s' }}>
                   {options.cancelText || 'Batal'}
                 </button>
               )}
               <button 
                 onClick={() => handleClose(true)} 
-                style={{ flex: options.type === 'confirm' ? 1 : undefined, padding: '12px 24px', borderRadius: '14px', background: options.isDestructive ? '#C0392B' : '#2E7D52', color: 'white', border: 'none', fontSize: '14px', fontWeight: 700, cursor: 'pointer', fontFamily: 'Nunito, sans-serif' }}
+                style={{ flex: 1, padding: '14px', borderRadius: '16px', background: options.isDestructive ? '#EF4444' : '#6366F1', color: 'white', border: 'none', fontSize: '14px', fontWeight: 800, cursor: 'pointer', fontFamily: 'Nunito, sans-serif', boxShadow: options.isDestructive ? '0 4px 12px rgba(239, 68, 68, 0.2)' : '0 4px 12px rgba(99, 102, 241, 0.2)', transition: 'all 0.2s' }}
               >
-                {options.confirmText || 'OK'}
+                {options.confirmText || 'Siap'}
               </button>
             </div>
           </div>
           <style>{`
             @keyframes fadeIn { from { opacity: 0 } to { opacity: 1 } }
-            @keyframes slideUp { from { opacity: 0; transform: translateY(20px) scale(0.95) } to { opacity: 1; transform: translateY(0) scale(1) } }
+            @keyframes slideUp { from { opacity: 0; transform: translateY(24px) scale(0.95); filter: blur(4px) } to { opacity: 1; transform: translateY(0) scale(1); filter: blur(0) } }
           `}</style>
         </div>
       )}

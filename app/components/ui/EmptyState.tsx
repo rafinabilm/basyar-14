@@ -9,15 +9,25 @@ interface EmptyStateProps {
 
 export function EmptyState({ icon, title, description, action }: EmptyStateProps) {
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '48px 24px', gap: '12px' }}>
-      <div style={{ width: '64px', height: '64px', borderRadius: '50%', background: '#EAF6EE', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+    <div className="animate-in" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '64px 32px', gap: '16px' }}>
+      <div style={{ 
+        width: '80px', 
+        height: '80px', 
+        borderRadius: '50%', 
+        background: '#EEF2FF', 
+        display: 'flex', 
+        alignItems: 'center', 
+        justifyContent: 'center',
+        color: '#6366F1'
+      }}>
         {icon}
       </div>
       <div style={{ textAlign: 'center' }}>
-        <div style={{ fontSize: '15px', fontWeight: 800, color: '#1C2B22' }}>{title}</div>
-        <div style={{ fontSize: '11px', color: '#A0B0A4', marginTop: '4px', lineHeight: 1.6 }}>{description}</div>
+        <h3 style={{ fontSize: '18px', fontWeight: 800, color: '#111827' }}>{title}</h3>
+        <p style={{ fontSize: '14px', color: '#6B7280', marginTop: '6px', lineHeight: 1.5, maxWidth: '240px' }}>{description}</p>
       </div>
-      {action && <div style={{ marginTop: '8px' }}>{action}</div>}
+      {action && <div style={{ marginTop: '12px' }}>{action}</div>}
     </div>
   )
 }
+

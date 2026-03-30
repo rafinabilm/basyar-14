@@ -41,9 +41,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   if (status === 'loading' && !isLoginPage) {
     return (
-      <div style={{ minHeight: '100dvh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: '#FBF8F3', gap: '16px' }}>
-        <div style={{ width: '36px', height: '36px', border: '3px solid #D4EDDE', borderTopColor: '#2E7D52', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
-        <p style={{ fontSize: '12px', color: '#A0B0A4', fontFamily: 'Nunito, sans-serif' }}>Memverifikasi akses...</p>
+      <div style={{ minHeight: '100dvh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: '#FFFFFF', gap: '20px' }}>
+        <div style={{ width: '40px', height: '40px', border: '4px solid #EEF2FF', borderTopColor: '#6366F1', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+        <p style={{ fontSize: '13px', fontWeight: 700, color: '#9CA3AF', fontFamily: 'Nunito, sans-serif', letterSpacing: '0.5px' }}>Menyiapkan Dashboard...</p>
         <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
       </div>
     )
