@@ -39,18 +39,28 @@ export default function IuranPage() {
     setIsMenuOpen(false)
   }
 
+  // Helper to format thousand separator
+  const formatIDR = (val: string) => {
+    const raw = val.replace(/\D/g, '')
+    if (!raw) return ''
+    return new Intl.NumberFormat('id-ID').format(parseInt(raw))
+  }
+
   // Handle Tagihan selection change
   useEffect(() => {
     if (selectedTagihanId === 'donasi') {
       setJumlah('')
     } else {
       const selected = tagihan.find(t => t.id === selectedTagihanId)
-      if (selected) setJumlah(String(selected.nominal))
+      if (selected) setJumlah(formatIDR(String(selected.nominal)))
     }
   }, [selectedTagihanId, tagihan])
 
   async function handleSubmit() {
-    if (!anggotaId || !file || !jumlah) {
+    // Strip dots before parsing
+    const rawJumlah = jumlah.replace(/\./g, '')
+    
+    if (!anggotaId || !file || !rawJumlah) {
       showAlert('Mohon lengkapi semua data dan bukti transfer.')
       return
     }
@@ -62,7 +72,7 @@ export default function IuranPage() {
     const { error } = await submitPembayaran({
       anggota_id: anggotaId,
       tagihan_id: selectedTagihanId === 'donasi' ? (null as any) : selectedTagihanId,
-      jumlah_bayar: parseInt(jumlah),
+      jumlah_bayar: parseInt(rawJumlah),
       foto_bukti_url: url,
     })
 
@@ -208,10 +218,11 @@ export default function IuranPage() {
               <div style={{ position: 'relative' }}>
                 <span style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', fontWeight: 800, color: '#6366F1', fontSize: '16px' }}>Rp</span>
                 <input 
-                  type="number" 
+                  type="text" 
+                  inputMode="numeric"
                   placeholder="0"
                   value={jumlah} 
-                  onChange={e => setJumlah(e.target.value)} 
+                  onChange={e => setJumlah(formatIDR(e.target.value))} 
                   style={{ width: '100%', background: '#F9FAFB', border: '1px solid #F3F4F6', borderRadius: '16px', padding: '16px 16px 16px 44px', fontSize: '20px', fontWeight: 900, color: '#111827', fontFamily: 'Space Grotesk, monospace', outline: 'none' }} 
                 />
               </div>

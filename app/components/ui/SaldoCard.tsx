@@ -44,18 +44,8 @@ export function SaldoCard({ saldo, masuk, keluar, monthlyIncome, period }: Saldo
           </span>
         </div>
 
-        <div style={{ fontSize: '36px', fontWeight: 800, color: 'white', letterSpacing: '-1.5px', lineHeight: 1, fontFamily: 'Space Grotesk, monospace', marginBottom: '12px' }}>
+        <div style={{ fontSize: '36px', fontWeight: 800, color: 'white', letterSpacing: '-1.5px', lineHeight: 1, fontFamily: 'Space Grotesk, monospace', marginBottom: '24px' }}>
           {formatRupiah(saldo)}
-        </div>
-
-        <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '24px' }}>
-          <svg viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" style={{ width: '12px', height: '12px' }} strokeWidth={3}>
-            <polyline points="23 6 13.5 15.5 8.5 10.5 1 18" />
-            <polyline points="17 6 23 6 23 12" />
-          </svg>
-          <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.7)', fontWeight: 500 }}>
-            +{formatRupiah(monthlyIncome || 0)} {period || 'bulan ini'} ↗
-          </span>
         </div>
 
         <Link href="/iuran" style={{ textDecoration: 'none' }}>

@@ -73,27 +73,23 @@ export default async function HomePage() {
           <StatCard 
             label="Total Anggota" 
             value={totalAnggota} 
-            subValue="+2 baru bulan ini"
             icon={<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" style={{ width: '18px', height: '18px' }} strokeWidth={2.5}><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></svg>}
           />
           <StatCard 
             label="Total Galeri" 
             value={totalFoto} 
-            subValue={`${totalFoto > 0 ? totalFoto : 'Belum'} Foto terunggah`}
             icon={<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" style={{ width: '18px', height: '18px' }} strokeWidth={2.5}><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" /><circle cx="12" cy="13" r="4" /></svg>}
             iconBg="#F5F3FF"
           />
           <StatCard 
             label="Pemasukan" 
             value={fmtShort(monthMasuk)} 
-            subValue={currentPeriod}
             icon={<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" style={{ width: '18px', height: '18px' }} strokeWidth={2.5}><polyline points="23 6 13.5 15.5 8.5 10.5 1 18" /><polyline points="17 6 23 6 23 12" /></svg>}
             iconBg="#ECFDF5"
           />
           <StatCard 
             label="Pengeluaran" 
             value={fmtShort(monthKeluar)} 
-            subValue="Sesuai anggaran"
             icon={<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" style={{ width: '18px', height: '18px' }} strokeWidth={2.5}><rect x="1" y="4" width="22" height="16" rx="2" /><line x1="1" y1="10" x2="23" y2="10" /></svg>}
             iconBg="#FFF1F2"
           />
