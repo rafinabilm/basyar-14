@@ -69,38 +69,40 @@ export default function GaleriPage() {
             description="Momen kebersamaan kalian akan muncul di sini segera."
           />
         ) : (
-          <>
-            {featured && (
-              <Link href={`/galeri/${featured.id}`} style={{ textDecoration: 'none' }} className="animate-in">
-                <div style={{ borderRadius: '24px', overflow: 'hidden', position: 'relative', cursor: 'pointer', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' }}>
-                  <div style={{ height: '200px', background: featured.foto_cover_url ? undefined : PLACEHOLDER_COLORS[0] }}>
-                    {featured.foto_cover_url && <img src={featured.foto_cover_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+            {filtered.map((event, i) => (
+              <Link key={event.id} href={`/galeri/${event.id}`} style={{ textDecoration: 'none' }} className="animate-in">
+                <div style={{ 
+                  animationDelay: `${i * 0.05}s`, 
+                  borderRadius: '24px', 
+                  overflow: 'hidden', 
+                  position: 'relative', 
+                  cursor: 'pointer', 
+                  boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' 
+                }}>
+                  <div style={{ 
+                    height: '200px', 
+                    background: event.foto_cover_url ? undefined : PLACEHOLDER_COLORS[i % PLACEHOLDER_COLORS.length] 
+                  }}>
+                    {event.foto_cover_url && <img src={event.foto_cover_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />}
                   </div>
-                  <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '24px 16px 16px', background: 'linear-gradient(transparent, rgba(17,24,39,0.9))' }}>
-                    <div style={{ fontSize: '18px', fontWeight: 800, color: 'white', letterSpacing: '-0.3px' }}>{featured.nama_event}</div>
-                    <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.7)', marginTop: '2px', fontWeight: 500 }}>{new Date(featured.tanggal).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</div>
+                  <div style={{ 
+                    position: 'absolute', 
+                    bottom: 0, 
+                    left: 0, 
+                    right: 0, 
+                    padding: '24px 16px 16px', 
+                    background: 'linear-gradient(transparent, rgba(17,24,39,0.9))' 
+                  }}>
+                    <div style={{ fontSize: '18px', fontWeight: 800, color: 'white', letterSpacing: '-0.3px' }}>{event.nama_event}</div>
+                    <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.7)', marginTop: '2px', fontWeight: 500 }}>
+                      {new Date(event.tanggal).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
+                    </div>
                   </div>
                 </div>
               </Link>
-            )}
-            {rest.length > 0 && (
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                {rest.map((event, i) => (
-                  <Link key={event.id} href={`/galeri/${event.id}`} style={{ textDecoration: 'none' }} className="animate-in">
-                    <div style={{ animationDelay: `${i * 0.1 + 0.2}s`, borderRadius: '20px', overflow: 'hidden', position: 'relative', cursor: 'pointer', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)' }}>
-                      <div style={{ height: '120px', background: event.foto_cover_url ? undefined : PLACEHOLDER_COLORS[(i + 1) % PLACEHOLDER_COLORS.length] }}>
-                        {event.foto_cover_url && <img src={event.foto_cover_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />}
-                      </div>
-                      <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '16px 12px 10px', background: 'linear-gradient(transparent, rgba(17,24,39,0.85))' }}>
-                        <div style={{ fontSize: '13px', fontWeight: 800, color: 'white' }}>{event.nama_event}</div>
-                        <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.7)', fontWeight: 500 }}>{new Date(event.tanggal).getFullYear()}</div>
-                      </div>
-                    </div>
-                  </Link>
-                ))}
-              </div>
-            )}
-          </>
+            ))}
+          </div>
         )}
       </div>
       <BottomNav />

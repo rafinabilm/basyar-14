@@ -4,6 +4,8 @@ interface SaldoCardProps {
   saldo: number
   masuk: number
   keluar: number
+  monthlyIncome?: number
+  period?: string
 }
 
 function formatRupiah(amount: number): string {
@@ -14,7 +16,7 @@ function formatRupiah(amount: number): string {
   }).format(Math.abs(amount))
 }
 
-export function SaldoCard({ saldo, masuk, keluar }: SaldoCardProps) {
+export function SaldoCard({ saldo, masuk, keluar, monthlyIncome, period }: SaldoCardProps) {
   return (
     <div style={{
       borderRadius: '24px',
@@ -52,7 +54,7 @@ export function SaldoCard({ saldo, masuk, keluar }: SaldoCardProps) {
             <polyline points="17 6 23 6 23 12" />
           </svg>
           <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.7)', fontWeight: 500 }}>
-            +{formatRupiah(1200000)} bulan ini ↗
+            +{formatRupiah(monthlyIncome || 0)} {period || 'bulan ini'} ↗
           </span>
         </div>
 

@@ -12,6 +12,7 @@ export interface TransaksiKas {
   kategori: string
   foto_bukti_url?: string
   dicatat_oleh?: string
+  status?: 'active' | 'archived'
   created_at: string
 }
 
@@ -27,7 +28,11 @@ export function useKas() {
       .order('tanggal', { ascending: false })
 
     if (error) setError(error.message)
-    else setTransaksi(data || [])
+    else {
+      // Filter out archived in JS to be safe against missing column in DB
+      const filtered = (data || []).filter((t: any) => t.status !== 'archived')
+      setTransaksi(filtered)
+    }
     setLoading(false)
   }, [])
 
@@ -58,4 +63,52 @@ export async function insertTransaksi(data: {
     .single()
 
   return { result, error }
+}
+
+export async function updateTransaksi(id: string, data: Partial<TransaksiKas>) {
+  const { data: result, error } = await supabase
+    .from('transaksi_kas')
+    .update(data)
+    .eq('id', id)
+    .select()
+    .single()
+
+  return { result, error }
+}
+
+export async function archiveTransaksi(id: string) {
+  const { error } = await supabase
+    .from('transaksi_kas')
+    .update({ status: 'archived' })
+    .eq('id', id)
+
+  return { error }
+}
+
+export async function restoreTransaksi(id: string) {
+  const { error } = await supabase
+    .from('transaksi_kas')
+    .update({ status: 'active' })
+    .eq('id', id)
+
+  return { error }
+}
+
+export async function deletePermanently(id: string) {
+  const { error } = await supabase
+    .from('transaksi_kas')
+    .delete()
+    .eq('id', id)
+
+  return { error }
+}
+
+export async function getArchivedKas() {
+  const { data, error } = await supabase
+    .from('transaksi_kas')
+    .select('*')
+    .eq('status', 'archived')
+    .order('tanggal', { ascending: false })
+
+  return { data, error }
 }

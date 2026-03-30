@@ -136,6 +136,16 @@ export async function insertFoto(data: {
   return { error }
 }
 
+export async function updateEvent(id: string, data: Partial<Event>) {
+  const { error } = await supabase.from('event').update(data).eq('id', id)
+  return { error }
+}
+
+export async function updateFoto(id: string, data: Partial<GaleriFoto>) {
+  const { error } = await supabase.from('galeri_foto').update(data).eq('id', id)
+  return { error }
+}
+
 export async function hapusEvent(id: string) {
   const { error } = await supabase.from('event').delete().eq('id', id)
   return { error }
