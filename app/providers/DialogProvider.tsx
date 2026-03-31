@@ -4,7 +4,7 @@ import React, { createContext, useContext, useState, ReactNode } from 'react'
 
 type DialogOptions = {
   title: string
-  message: string
+  message: string | ReactNode
   type?: 'alert' | 'confirm'
   confirmText?: string
   cancelText?: string
@@ -76,9 +76,11 @@ export function DialogProvider({ children }: { children: ReactNode }) {
               )}
               <div>
                 <h3 style={{ fontSize: '20px', fontWeight: 800, color: '#111827', margin: '0 0 8px 0', fontFamily: 'Space Grotesk, sans-serif' }}>{options.title}</h3>
-                <p style={{ fontSize: '14px', color: '#6B7280', margin: 0, lineHeight: 1.6, fontWeight: 500 }}>
-                  {options.message.split('\n').map((line, i) => <React.Fragment key={i}>{line}<br/></React.Fragment>)}
-                </p>
+                <div style={{ fontSize: '14px', color: '#6B7280', margin: 0, lineHeight: 1.6, fontWeight: 500 }}>
+                  {typeof options.message === 'string' 
+                    ? options.message.split('\n').map((line, i) => <React.Fragment key={i}>{line}<br/></React.Fragment>)
+                    : options.message}
+                </div>
               </div>
             </div>
             

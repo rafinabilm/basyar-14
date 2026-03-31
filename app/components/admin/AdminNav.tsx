@@ -223,24 +223,34 @@ export function AdminNav() {
           align-items: center;
           justify-content: center;
           font-weight: 900;
+          z-index: 2;
+        }
+
+        .admin-banner {
+          position: fixed;
+          top: 0;
+          left: 50%;
+          transform: translateX(-50%);
+          width: 100%;
+          max-width: 432px;
+          background: #6366F1;
+          padding: 8px 16px;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          box-shadow: 0 4px 12px rgba(99, 102, 241, 0.25);
+          z-index: 10000;
         }
       `}</style>
 
-      {/* Admin Banner */}
-      <div style={{
-        background: '#6366F1',
-        padding: '8px 20px',
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        boxShadow: '0 2px 4px rgba(99, 102, 241, 0.1)'
-      }}>
+      {/* Admin Banner — Fixed Top */}
+      <div className="admin-banner">
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <span style={{ fontSize: '10px', fontWeight: 900, color: 'white', letterSpacing: '1px', textTransform: 'uppercase', fontFamily: 'Space Grotesk, monospace' }}>ADMIN MODE</span>
         </div>
         <div style={{ display: 'flex', gap: '16px' }}>
-          <Link href="/" target="_blank" style={{ fontSize: '10px', color: 'rgba(255,255,255,0.85)', fontWeight: 800, textDecoration: 'none', fontFamily: 'Nunito, sans-serif' }}>Portal Publik ↗</Link>
-          <Link href="/admin/settings" style={{ fontSize: '10px', color: 'rgba(255,255,255,0.85)', fontWeight: 800, textDecoration: 'none', fontFamily: 'Nunito, sans-serif' }}>Settings</Link>
+          <Link href="/" target="_blank" style={{ fontSize: '10px', color: 'rgba(255,255,255,0.9)', fontWeight: 800, textDecoration: 'none', fontFamily: 'Nunito, sans-serif' }}>Portal Publik ↗</Link>
+          <Link href="/admin/settings" style={{ fontSize: '10px', color: 'rgba(255,255,255,0.9)', fontWeight: 800, textDecoration: 'none', fontFamily: 'Nunito, sans-serif' }}>Settings</Link>
         </div>
       </div>
 

@@ -5,6 +5,7 @@ import { SaldoCard } from '@/app/components/ui/SaldoCard'
 import { Card } from '@/app/components/ui/Card'
 import { EmptyState } from '@/app/components/ui/EmptyState'
 import { useKas } from '@/app/hooks/useKas'
+import { useDialog } from '@/app/providers/DialogProvider'
 
 function fmt(n: number) {
   return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(Math.abs(n))
@@ -12,6 +13,7 @@ function fmt(n: number) {
 
 export default function KasPage() {
   const { transaksi, loading } = useKas()
+  const { showAlert } = useDialog()
   const [filter, setFilter] = useState<'semua' | 'pemasukan' | 'pengeluaran'>('semua')
 
   const filtered = transaksi.filter(t => filter === 'semua' ? true : t.jenis === filter)
@@ -83,6 +85,23 @@ export default function KasPage() {
                        {t.jenis === 'pemasukan' ? '+' : '-'}{fmt(t.jumlah).replace('Rp', '').trim()}
                     </div>
                     <div style={{ fontSize: '10px', color: '#9CA3AF', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.5px' }}>{t.status === 'archived' ? 'Arsip' : t.jenis}</div>
+                    
+                    {t.foto_bukti_url && (
+                      <button 
+                        onClick={() => showAlert({
+                          title: 'Bukti Transaksi',
+                          message: (
+                            <div style={{ textAlign: 'center' }}>
+                              <img src={t.foto_bukti_url} alt="Bukti Transfer" style={{ width: '100%', borderRadius: '12px', marginBottom: '12px' }} />
+                              <p style={{ fontSize: '14px', fontWeight: 700, color: '#111827' }}>{t.keterangan}</p>
+                            </div>
+                          )
+                        })}
+                        style={{ marginTop: '8px', padding: '4px 8px', borderRadius: '8px', background: '#F3F4F6', border: 'none', color: '#6366F1', fontSize: '10px', fontWeight: 800, cursor: 'pointer' }}
+                      >
+                        Lihat Bukti
+                      </button>
+                    )}
                   </div>
                 </div>
               </Card>
