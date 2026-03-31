@@ -129,7 +129,7 @@ export function AdminNav() {
           transform: translateX(-50%);
           width: calc(100% - 48px);
           max-width: 380px;
-          z-index: 9999;
+          z-index: 50;
         }
 
         .admin-nav-pill {

@@ -126,7 +126,7 @@ export function BottomNav() {
           transform: translateX(-50%);
           width: calc(100% - 48px);
           max-width: 380px;
-          z-index: 9999;
+          z-index: 50;
         }
 
         .apple-nav-pill {

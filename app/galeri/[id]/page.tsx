@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useEventById, useFotoByEvent } from '@/app/hooks/useGaleri'
+import { createPortal } from 'react-dom'
 
 const PLACEHOLDER_COLORS = [
   'linear-gradient(135deg, #EEF2FF, #E0E7FF)',
@@ -19,6 +20,7 @@ export default function GaleriDetailPage({ params }: { params: any }) {
   const { foto, loading: fotoLoading } = useFotoByEvent(id)
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null)
   const [touchStart, setTouchStart] = useState<number | null>(null)
+  const [showUI, setShowUI] = useState(true)
 
   const handleNext = (e?: React.MouseEvent) => {
     e?.stopPropagation()
@@ -108,7 +110,7 @@ export default function GaleriDetailPage({ params }: { params: any }) {
             {foto.map((f, i) => (
               <div 
                 key={f.id} 
-                onClick={() => setSelectedIndex(i)} 
+                onClick={() => { setSelectedIndex(i); setShowUI(true); }} 
                 className="animate-in"
                 style={{ 
                    animationDelay: `${i * 0.05}s`,
@@ -129,78 +131,148 @@ export default function GaleriDetailPage({ params }: { params: any }) {
       </div>
 
       {/* Fullscreen Photo Viewer */}
-      {selectedFoto && (
-        <div 
-          style={{ position: 'fixed', inset: 0, background: 'rgba(15, 23, 42, 0.99)', zIndex: 1000, display: 'flex', flexDirection: 'column', backdropFilter: 'blur(16px)', animation: 'fadeIn 0.2s ease-out', userSelect: 'none' }}
-          onTouchStart={handleTouchStart}
-          onTouchEnd={handleTouchEnd}
-        >
-          {/* Header Area */}
-          <div style={{ padding: '24px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'relative', zIndex: 10 }}>
-            <div style={{ color: 'white', fontSize: '13px', fontWeight: 800, background: 'rgba(255,255,255,0.15)', padding: '6px 14px', borderRadius: '120px', border: '1px solid rgba(255,255,255,0.1)' }}>
-              {selectedIndex! + 1} / {foto.length}
-            </div>
-            <button 
-              onClick={() => setSelectedIndex(null)} 
-              style={{ background: 'rgba(255,255,255,0.15)', border: '1px solid rgba(255,255,255,0.1)', width: '44px', height: '44px', borderRadius: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: '24px', cursor: 'pointer' }}
+      {selectedFoto && typeof document !== 'undefined' && (
+        createPortal(
+          <div 
+            style={{ 
+              position: 'fixed', 
+              inset: 0, 
+              background: '#000000', 
+              zIndex: 9998, 
+              display: 'grid', 
+              placeItems: 'center', 
+              height: '100dvh',
+              width: '100vw',
+              userSelect: 'none',
+              overflow: 'hidden'
+            }}
+            onTouchStart={handleTouchStart}
+            onTouchEnd={handleTouchEnd}
+            onClick={() => setShowUI(!showUI)}
+          >
+            {/* Image Layer — Scrollable Viewport */}
+            <div 
+              key={selectedFoto.id} 
+              style={{ 
+                position: 'absolute',
+                inset: 0,
+                overflowY: 'auto',
+                overflowX: 'hidden',
+                background: '#000000',
+                WebkitOverflowScrolling: 'touch', 
+                animation: 'photoSlide 0.3s cubic-bezier(0.16, 1, 0.3, 1)' 
+              }} 
             >
-              ×
-            </button>
-          </div>
+              <div 
+                style={{ 
+                  minHeight: '100%', 
+                  width: '100%', 
+                  display: 'flex', 
+                  alignItems: 'center', // Centers landscape (shorter than viewport)
+                  justifyContent: 'center'
+                }}
+                onClick={() => setShowUI(!showUI)}
+              >
+                <img 
+                  src={selectedFoto.foto_url} 
+                  alt={selectedFoto.caption || ''} 
+                  style={{ 
+                    width: '100%', 
+                    height: 'auto', 
+                    display: 'block',
+                    margin: '0 auto' 
+                  }} 
+                />
+              </div>
+            </div>
 
-          {/* Main Content Area */}
-          <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 12px 100px', position: 'relative' }} onClick={() => setSelectedIndex(null)}>
-            {/* Nav Buttons - Left */}
-            {selectedIndex! > 0 && (
+            {/* UI Layer: Header */}
+            <div style={{ 
+              position: 'absolute', 
+              top: 0, 
+              left: 0, 
+              right: 0, 
+              padding: 'env(safe-area-inset-top, 24px) 20px 24px', 
+              display: 'flex', 
+              justifyContent: 'space-between', 
+              alignItems: 'center',
+              background: 'linear-gradient(to bottom, rgba(0,0,0,0.6), transparent)',
+              zIndex: 10,
+              opacity: showUI ? 1 : 0,
+              pointerEvents: showUI ? 'auto' : 'none',
+              transition: 'all 0.3s ease'
+            }}>
+              <div style={{ color: 'white', fontSize: '13px', fontWeight: 800, background: 'rgba(255,255,255,0.15)', padding: '6px 14px', borderRadius: '120px', border: '1px solid rgba(255,255,255,0.1)', backdropFilter: 'blur(10px)' }}>
+                {selectedIndex! + 1} / {foto.length}
+              </div>
               <button 
-                onClick={handlePrev} 
-                className="viewer-nav-btn"
-                style={{ position: 'absolute', left: '16px', width: '56px', height: '56px', borderRadius: '50%', background: 'rgba(0,0,0,0.3)', border: '2px solid rgba(255,255,255,0.4)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 20, cursor: 'pointer', transition: 'all 0.2s' }}
+                onClick={(e) => { e.stopPropagation(); setSelectedIndex(null) }} 
+                style={{ background: 'rgba(255,255,255,0.15)', border: '1px solid rgba(255,255,255,0.1)', width: '44px', height: '44px', borderRadius: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: '24px', cursor: 'pointer', backdropFilter: 'blur(10px)' }}
+              >
+                ×
+              </button>
+            </div>
+
+            {/* UI Layer: Navigation Arrows */}
+            {showUI && selectedIndex! > 0 && (
+              <button 
+                onClick={(e) => { e.stopPropagation(); handlePrev() }} 
+                style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', width: '56px', height: '56px', borderRadius: '50%', background: 'rgba(0,0,0,0.3)', border: '2px solid rgba(255,255,255,0.4)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 20, cursor: 'pointer', borderStyle: 'solid' }}
               >
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" style={{ width: '24px', height: '24px' }} strokeWidth={3} strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6" /></svg>
               </button>
             )}
-            
-            {/* Image Wrapper */}
-            <div key={selectedFoto.id} style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', animation: 'photoSlide 0.3s cubic-bezier(0.16, 1, 0.3, 1)' }}>
-              <img 
-                src={selectedFoto.foto_url} 
-                alt={selectedFoto.caption || ''} 
-                style={{ maxWidth: '92vw', maxHeight: '75vh', objectFit: 'contain', borderRadius: '16px', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)' }} 
-                onClick={(e) => e.stopPropagation()}
-              />
-            </div>
-
-            {/* Nav Buttons - Right */}
-            {selectedIndex! < foto.length - 1 && (
+            {showUI && selectedIndex! < foto.length - 1 && (
               <button 
-                onClick={handleNext} 
-                className="viewer-nav-btn"
-                style={{ position: 'absolute', right: '16px', width: '56px', height: '56px', borderRadius: '50%', background: 'rgba(0,0,0,0.3)', border: '2px solid rgba(255,255,255,0.4)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 20, cursor: 'pointer', transition: 'all 0.2s' }}
+                onClick={(e) => { e.stopPropagation(); handleNext() }} 
+                style={{ position: 'absolute', right: '16px', top: '50%', transform: 'translateY(-50%)', width: '56px', height: '56px', borderRadius: '50%', background: 'rgba(0,0,0,0.3)', border: '2px solid rgba(255,255,255,0.4)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 20, cursor: 'pointer', borderStyle: 'solid' }}
               >
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" style={{ width: '24px', height: '24px' }} strokeWidth={3} strokeLinecap="round" strokeLinejoin="round"><path d="M9 18l6-6-6-6" /></svg>
               </button>
             )}
-          </div>
 
-          {/* Caption Area */}
-          {selectedFoto.caption && (
-            <div style={{ position: 'absolute', bottom: '120px', left: 0, right: 0, textAlign: 'center', padding: '0 24px', pointerEvents: 'none' }}>
-              <span style={{ background: 'white', color: '#111827', padding: '12px 28px', borderRadius: '120px', fontSize: '13px', fontWeight: 800, boxShadow: '0 10px 40px rgba(0,0,0,0.4)' }}>
-                {selectedFoto.caption}
-              </span>
-            </div>
-          )}
+            {/* UI Layer: Caption */}
+            {selectedFoto.caption && (
+              <div style={{ 
+                position: 'absolute', 
+                bottom: 0, 
+                left: 0, 
+                right: 0, 
+                padding: '60px 24px env(safe-area-inset-bottom, 40px)', 
+                textAlign: 'center', 
+                pointerEvents: 'none', 
+                background: 'linear-gradient(to top, rgba(0,0,0,0.7), transparent)',
+                zIndex: 10,
+                opacity: showUI ? 1 : 0,
+                transition: 'all 0.3s ease'
+              }}>
+                <span style={{ 
+                  display: 'inline-block',
+                  background: 'rgba(255,255,255,0.1)', 
+                  color: 'white', 
+                  padding: '12px 28px', 
+                  borderRadius: '120px', 
+                  fontSize: '13px', 
+                  fontWeight: 800, 
+                  backdropFilter: 'blur(10px)', 
+                  border: '1px solid rgba(255,255,255,0.1)',
+                  maxWidth: '85vw',
+                  textShadow: '0 2px 4px rgba(0,0,0,0.3)'
+                }}>
+                  {selectedFoto.caption}
+                </span>
+              </div>
+            )}
 
-          <style>{`
-            @keyframes photoSlide { 
-              from { opacity: 0; transform: scale(0.96) translateY(10px) } 
-              to { opacity: 1; transform: scale(1) translateY(0) } 
-            }
-            .viewer-nav-btn:hover { background: rgba(0,0,0,0.5) !important; transform: scale(1.1); }
-            .viewer-nav-btn:active { transform: scale(0.9); }
-          `}</style>
-        </div>
+            <style>{`
+              @keyframes photoSlide { 
+                from { opacity: 0; transform: scale(0.96) } 
+                to { opacity: 1; transform: scale(1) } 
+              }
+            `}</style>
+          </div>,
+          document.body
+        )
       )}
     </main>
   )
