@@ -2,7 +2,6 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { BottomNav } from '@/app/components/ui/BottomNav'
 import { EmptyState } from '@/app/components/ui/EmptyState'
 import { PageHeader } from '@/app/components/ui/PageHeader'
 import { useEvents } from '@/app/hooks/useGaleri'
@@ -23,9 +22,6 @@ export default function GaleriPage() {
   const filtered = events.filter(e =>
     activeTahun === 'Semua' ? true : new Date(e.tanggal).getFullYear().toString() === activeTahun
   )
-
-  const featured = filtered[0]
-  const rest = filtered.slice(1)
 
   return (
     <main style={{ paddingBottom: '120px' }}>
@@ -105,7 +101,6 @@ export default function GaleriPage() {
           </div>
         )}
       </div>
-      <BottomNav />
     </main>
   )
 }

@@ -3,6 +3,8 @@ import { ReactNode } from 'react'
 import { Nunito, Space_Grotesk } from 'next/font/google'
 import './globals.css'
 import { DialogProvider } from './providers/DialogProvider'
+import { PageTransitionWrapper } from './components/ui/PageTransitionWrapper'
+import { LayoutNavManager } from './components/ui/LayoutNavManager'
 import { Analytics } from '@vercel/analytics/next'
 import { SpeedInsights } from '@vercel/speed-insights/next'
 
@@ -49,7 +51,10 @@ export default function RootLayout({
       <body>
         <div className="mobile-container">
           <DialogProvider>
-            {children}
+            <PageTransitionWrapper>
+              {children}
+            </PageTransitionWrapper>
+            <LayoutNavManager />
           </DialogProvider>
         </div>
         <Analytics />

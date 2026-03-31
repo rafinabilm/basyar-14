@@ -1,16 +1,33 @@
 'use client'
 
-import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
+import { useCallback, useTransition } from 'react'
 
 const navItems = [
   {
     href: '/',
     label: 'Home',
     icon: (active: boolean) => (
-      <svg viewBox="0 0 24 24" fill="none" stroke={active ? '#6366F1' : '#9CA3AF'} style={{ width: '20px', height: '20px' }} strokeWidth={2}>
-        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
-        <polyline points="9 22 9 12 15 12 15 22" />
+      <svg
+        viewBox="0 0 24 24"
+        fill={active ? 'currentColor' : 'none'}
+        stroke="currentColor"
+        style={{ width: '22px', height: '22px' }}
+        strokeWidth={active ? 0 : 1.8}
+      >
+        <path
+          d="M3 9.5L12 3l9 6.5V20a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V9.5z"
+          fill={active ? 'currentColor' : 'none'}
+          stroke="currentColor"
+          strokeWidth={active ? 0 : 1.8}
+        />
+        <path
+          d="M9 21V12h6v9"
+          stroke={active ? 'rgba(255,255,255,0.5)' : 'currentColor'}
+          strokeWidth={1.8}
+          strokeLinecap="round"
+          fill="none"
+        />
       </svg>
     ),
   },
@@ -18,9 +35,18 @@ const navItems = [
     href: '/kas',
     label: 'Kas',
     icon: (active: boolean) => (
-      <svg viewBox="0 0 24 24" fill="none" stroke={active ? '#6366F1' : '#9CA3AF'} style={{ width: '20px', height: '20px' }} strokeWidth={2}>
-        <rect x="1" y="4" width="22" height="16" rx="2" />
-        <line x1="1" y1="10" x2="23" y2="10" />
+      <svg
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        style={{ width: '22px', height: '22px' }}
+        strokeWidth={1.8}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <rect x="2" y="5" width="20" height="14" rx="3" fill={active ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth={active ? 0 : 1.8} />
+        <line x1="2" y1="10" x2="22" y2="10" stroke={active ? 'rgba(255,255,255,0.5)' : 'currentColor'} strokeWidth={1.8} />
+        <line x1="6" y1="15" x2="9" y2="15" stroke={active ? 'rgba(255,255,255,0.5)' : 'currentColor'} strokeWidth={1.8} strokeLinecap="round" />
       </svg>
     ),
   },
@@ -28,9 +54,23 @@ const navItems = [
     href: '/iuran',
     label: 'Iuran',
     icon: (active: boolean) => (
-      <svg viewBox="0 0 24 24" fill="none" stroke={active ? '#6366F1' : '#9CA3AF'} style={{ width: '20px', height: '20px' }} strokeWidth={2}>
-        <line x1="12" y1="1" x2="12" y2="23" />
-        <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+      <svg
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        style={{ width: '22px', height: '22px' }}
+        strokeWidth={1.8}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <circle cx="12" cy="12" r="9" fill={active ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth={active ? 0 : 1.8} />
+        <path
+          d="M12 7v1.5m0 7V17m2.5-7.5a2.5 2.5 0 0 0-5 0c0 1.5 1 2 2.5 2.5S15 13.5 15 15a2.5 2.5 0 0 1-5 0"
+          stroke={active ? 'rgba(255,255,255,0.65)' : 'currentColor'}
+          strokeWidth={1.6}
+          fill="none"
+          strokeLinecap="round"
+        />
       </svg>
     ),
   },
@@ -38,10 +78,23 @@ const navItems = [
     href: '/galeri',
     label: 'Galeri',
     icon: (active: boolean) => (
-      <svg viewBox="0 0 24 24" fill="none" stroke={active ? '#6366F1' : '#9CA3AF'} style={{ width: '20px', height: '20px' }} strokeWidth={2}>
-        <rect x="3" y="3" width="18" height="18" rx="2" />
-        <circle cx="8.5" cy="8.5" r="1.5" />
-        <polyline points="21 15 16 10 5 21" />
+      <svg
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        style={{ width: '22px', height: '22px' }}
+        strokeWidth={1.8}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <rect x="3" y="3" width="18" height="18" rx="3" fill={active ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth={active ? 0 : 1.8} />
+        <circle cx="8.5" cy="8.5" r="1.5" fill={active ? 'rgba(255,255,255,0.6)' : 'currentColor'} stroke="none" />
+        <path
+          d="M21 15l-5-5L5 21"
+          stroke={active ? 'rgba(255,255,255,0.65)' : 'currentColor'}
+          strokeWidth={1.8}
+          fill="none"
+        />
       </svg>
     ),
   },
@@ -49,67 +102,142 @@ const navItems = [
 
 export function BottomNav() {
   const pathname = usePathname()
+  const router = useRouter()
+  const [isPending, startTransition] = useTransition()
+
+  // Match the exact route or potential sub-route
+  const activeIndex = navItems.findIndex(item => (
+    item.href === '/' ? pathname === '/' : pathname.startsWith(item.href)
+  ))
+
+  const handleNav = useCallback((href: string) => {
+    startTransition(() => {
+      router.push(href)
+    })
+  }, [router])
 
   return (
-    <nav style={{
-      position: 'fixed',
-      bottom: 0,
-      left: '50%',
-      transform: 'translateX(-50%)',
-      width: '100%',
-      maxWidth: '430px',
-      background: 'rgba(255, 255, 255, 0.8)',
-      backdropFilter: 'blur(12px)',
-      borderTop: '1px solid #F3F4F6',
-      zIndex: 30,
-      paddingBottom: 'env(safe-area-inset-bottom)',
-    }}>
-      <div style={{ display: 'flex', justifyContent: 'space-around', alignItems: 'center', padding: '12px 4px 24px' }}>
-        {navItems.map((item) => {
-          const isActive = pathname === item.href
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                gap: '4px',
-                padding: '4px 16px',
-                textDecoration: 'none',
-                transition: 'all 0.2s',
-              }}
-            >
-              <div style={{
-                transition: 'transform 0.2s',
-                transform: isActive ? 'scale(1.1)' : 'scale(1)',
-                color: isActive ? '#6366F1' : '#9CA3AF'
-              }}>
-                {item.icon(isActive)}
-              </div>
-              <span style={{
-                fontSize: '10px',
-                fontWeight: isActive ? 700 : 500,
-                color: isActive ? '#6366F1' : '#9CA3AF',
-                fontFamily: 'Nunito, sans-serif',
-              }}>
-                {item.label}
-              </span>
-              {isActive && (
-                <div style={{
-                  width: '4px',
-                  height: '4px',
-                  borderRadius: '50%',
-                  background: '#6366F1',
-                  marginTop: '2px'
-                }} />
-              )}
-            </Link>
-          )
-        })}
-      </div>
-    </nav>
+    <>
+      <style>{`
+        .apple-nav {
+          position: fixed;
+          bottom: calc(20px + env(safe-area-inset-bottom, 0px));
+          left: 50%;
+          transform: translateX(-50%);
+          width: calc(100% - 48px);
+          max-width: 380px;
+          z-index: 9999;
+        }
 
+        .apple-nav-pill {
+          position: relative;
+          display: flex;
+          align-items: center;
+          justify-content: space-around;
+          background: rgba(255, 255, 255, 0.85);
+          backdrop-filter: blur(16px) saturate(180%);
+          -webkit-backdrop-filter: blur(16px) saturate(180%);
+          border-radius: 30px;
+          border: 1px solid rgba(255, 255, 255, 0.5);
+          box-shadow: 
+            0 10px 25px -5px rgba(0, 0, 0, 0.1),
+            0 8px 10px -6px rgba(0, 0, 0, 0.1);
+          padding: 6px;
+        }
+
+        .active-slider {
+          position: absolute;
+          top: 6px;
+          bottom: 6px;
+          left: 6px;
+          width: calc((100% - 12px) / ${navItems.length});
+          background: rgba(99, 102, 241, 0.12);
+          border-radius: 24px;
+          transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+          z-index: 0;
+          pointer-events: none;
+        }
+
+        .apple-nav-item {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          gap: 2px;
+          flex: 1;
+          padding: 8px 0;
+          border-radius: 24px;
+          text-decoration: none;
+          transition: color 0.3s;
+          position: relative;
+          -webkit-tap-highlight-color: transparent;
+          min-width: 0;
+          cursor: pointer;
+          border: none;
+          background: transparent;
+          z-index: 1;
+        }
+
+        .apple-nav-item:active {
+          transform: scale(0.92);
+        }
+
+        .apple-nav-icon {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .apple-nav-item.active .apple-nav-icon {
+          transform: scale(1.1) translateY(-1px);
+        }
+
+        .apple-nav-label {
+          font-size: 10px;
+          font-weight: 600;
+          letter-spacing: 0.01em;
+          transition: all 0.3s;
+        }
+
+        .apple-nav-item.active .apple-nav-label {
+          font-weight: 700;
+        }
+
+        .apple-nav-pill.pending {
+          opacity: 0.7;
+        }
+      `}</style>
+
+      <nav className="apple-nav" aria-label="Navigasi utama">
+        <div className={`apple-nav-pill${isPending ? ' pending' : ''}`}>
+          <div 
+            className="active-slider"
+            style={{ 
+              transform: `translateX(calc(${activeIndex >= 0 ? activeIndex : 0} * 100%))` 
+            }}
+          />
+          {navItems.map((item, idx) => {
+            const isActive = idx === activeIndex
+            return (
+              <button
+                key={item.href}
+                className={`apple-nav-item${isActive ? ' active' : ''}`}
+                style={{ color: isActive ? '#6366F1' : '#94a3b8' }}
+                onClick={() => handleNav(item.href)}
+                aria-current={isActive ? 'page' : undefined}
+              >
+                <div className="apple-nav-icon">
+                  {item.icon(isActive)}
+                </div>
+                <span className="apple-nav-label">
+                  {item.label}
+                </span>
+              </button>
+            )
+          })}
+        </div>
+      </nav>
+    </>
   )
 }

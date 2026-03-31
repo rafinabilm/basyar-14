@@ -1,4 +1,3 @@
-import { BottomNav } from '@/app/components/ui/BottomNav'
 import { SaldoCard } from '@/app/components/ui/SaldoCard'
 import { StatCard } from '@/app/components/ui/StatCard'
 import { Card } from '@/app/components/ui/Card'
@@ -34,7 +33,6 @@ export default async function HomePage() {
   const transaksi = (transaksiRes.data || []).filter((t: any) => t.status !== 'archived')
   
   const totalFoto = fotoCountRes.count || 0
-  const fotos = fotoRes.data || []
   const totalAnggota = anggotaRes.count || 0
   const latestEvents = latestEventsRes.data || []
 
@@ -44,14 +42,12 @@ export default async function HomePage() {
   const totalKeluar = transaksi.filter((t: any) => t.jenis === 'pengeluaran').reduce((acc: number, t: any) => acc + t.jumlah, 0)
   
   // Monthly stats derived from the same source of truth (transaksi)
-  // Use .startsWith to handle both "YYYY-MM-DD" and "YYYY-MM-DD HH:mm:ss"
   const monthData = transaksi.filter((t: any) => t.tanggal && t.tanggal.startsWith(monthPrefix))
   
   const monthMasuk = monthData.filter((t: any) => t.jenis === 'pemasukan').reduce((acc: number, t: any) => acc + t.jumlah, 0)
   const monthKeluar = monthData.filter((t: any) => t.jenis === 'pengeluaran').reduce((acc: number, t: any) => acc + t.jumlah, 0)
 
   const recentTransaksi = transaksi.slice(0, 5)
-
   const PLACEHOLDER_COLORS = ['#6366F1', '#4F46E5', '#818CF8']
 
   return (
@@ -65,7 +61,6 @@ export default async function HomePage() {
       </div>
 
       <div style={{ padding: '0 20px', display: 'flex', flexDirection: 'column', gap: '24px' }}>
-        {/* Main Card */}
         <SaldoCard saldo={saldo} masuk={totalMasuk} keluar={totalKeluar} monthlyIncome={monthMasuk} period={currentPeriod} />
 
         {/* Stats Grid */}
@@ -95,7 +90,7 @@ export default async function HomePage() {
           />
         </div>
 
-        {/* Transaksi Terakhir */}
+        {/* Riwayat Kas */}
         <div>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
             <h2 style={{ fontSize: '18px', fontWeight: 800, color: '#111827' }}>Riwayat Kas</h2>
@@ -130,7 +125,7 @@ export default async function HomePage() {
           </Card>
         </div>
 
-        {/* Gallery Grid (Dinamis per Event) */}
+        {/* Gallery Grid */}
         <div>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
             <h2 style={{ fontSize: '18px', fontWeight: 800, color: '#111827' }}>Momen Terkini</h2>
@@ -159,8 +154,6 @@ export default async function HomePage() {
           )}
         </div>
       </div>
-
-      <BottomNav />
     </main>
   )
 }

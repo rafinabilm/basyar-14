@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { BottomNav } from '@/app/components/ui/BottomNav'
 import { Card } from '@/app/components/ui/Card'
 import { PageHeader } from '@/app/components/ui/PageHeader'
 import { useTagihan, useAnggota, submitPembayaran } from '@/app/hooks/useIuran'
@@ -274,9 +273,6 @@ export default function IuranPage() {
           </Card>
         )}
       </div>
-
-      <BottomNav />
     </main>
   )
 }
-

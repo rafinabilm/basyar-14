@@ -2,8 +2,7 @@
 
 import React, { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { BottomNav } from '@/app/components/ui/BottomNav'
-import { useEventById, useFotoByEvent, GaleriFoto } from '@/app/hooks/useGaleri'
+import { useEventById, useFotoByEvent } from '@/app/hooks/useGaleri'
 
 const PLACEHOLDER_COLORS = [
   'linear-gradient(135deg, #EEF2FF, #E0E7FF)',
@@ -203,8 +202,6 @@ export default function GaleriDetailPage({ params }: { params: any }) {
           `}</style>
         </div>
       )}
-
-      <BottomNav />
     </main>
   )
 }

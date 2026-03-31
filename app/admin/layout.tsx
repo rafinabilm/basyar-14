@@ -51,7 +51,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   return (
     <div>
-      {!isLoginPage && status === 'auth' && <AdminNav />}
       {children}
     </div>
   )
