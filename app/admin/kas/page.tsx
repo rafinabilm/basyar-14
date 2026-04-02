@@ -119,7 +119,7 @@ export default function AdminKasPage() {
   
   const initialForm = { jenis: 'pengeluaran', jumlah: '', keterangan: '', kategori: 'lainnya', tanggal: new Date().toISOString().split('T')[0] }
   const [form, setForm] = useState(initialForm)
-  const [file, setFile] = useState<File | null>(null)
+  const [files, setFiles] = useState<File[]>([])
   const [existingBukti, setExistingBukti] = useState<string | null>(null)
 
   function handleEdit(t: TransaksiKas) {
@@ -152,12 +152,14 @@ export default function AdminKasPage() {
     setSaving(true)
     
     let foto_bukti_url = existingBukti
-    if (file) {
-      const url = await uploadFile(file, 'basyar14/kas')
+    
+    // Handle multiple file uploads (use first file for now, store only 1 in DB)
+    if (files.length > 0) {
+      const url = await uploadFile(files[0], 'basyar14/kas')
       if (url) foto_bukti_url = url
     }
 
-    const payload = { ...form, jumlah: parseInt(form.jumlah), foto_bukti_url: foto_bukti_url || undefined } as any
+    const payload = { ...form, jumlah: parseInt(form.jumlah.replace(/\./g, '')), foto_bukti_url: foto_bukti_url || undefined } as any
     
     let res
     if (editingId) {
@@ -172,7 +174,7 @@ export default function AdminKasPage() {
     setShowForm(false)
     setEditingId(null)
     setForm(initialForm)
-    setFile(null)
+    setFiles([])
     setExistingBukti(null)
     refetch()
     showAlert(editingId ? 'Berhasil diperbarui' : 'Berhasil dicatat')
@@ -262,7 +264,16 @@ export default function AdminKasPage() {
             <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '12px' }}>
               <div>
                 <div style={{ fontSize: '11px', fontWeight: 800, letterSpacing: '0.5px', textTransform: 'uppercase', color: '#9CA3AF', marginBottom: '6px' }}>Nominal (Rp)</div>
-                <input type="number" value={form.jumlah} onChange={e => setForm(p => ({ ...p, jumlah: e.target.value }))} style={{ width: '100%', background: '#F9FAFB', border: '1px solid #F3F4F6', borderRadius: '12px', padding: '12px', fontSize: '16px', fontWeight: 800, color: '#111827', fontFamily: 'Space Grotesk, monospace', outline: 'none' }} />
+                <input 
+                  type="text" 
+                  placeholder="0" 
+                  value={form.jumlah ? form.jumlah.replace(/\B(?=(\d{3})+(?!\d))/g, '.') : ''} 
+                  onChange={e => {
+                    const numOnly = e.target.value.replace(/\D/g, '');
+                    setForm(p => ({ ...p, jumlah: numOnly }));
+                  }} 
+                  style={{ width: '100%', background: '#F9FAFB', border: '1px solid #F3F4F6', borderRadius: '12px', padding: '12px', fontSize: '16px', fontWeight: 800, color: '#111827', fontFamily: 'Space Grotesk, monospace', outline: 'none' }} 
+                />
               </div>
               <div>
                 <div style={{ fontSize: '11px', fontWeight: 800, letterSpacing: '0.5px', textTransform: 'uppercase', color: '#9CA3AF', marginBottom: '6px' }}>Kategori</div>
@@ -278,18 +289,47 @@ export default function AdminKasPage() {
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
               <div style={{ fontSize: '11px', fontWeight: 800, letterSpacing: '0.5px', textTransform: 'uppercase', color: '#9CA3AF' }}>Bukti Transaksi</div>
-              {existingBukti && !file && (
+              
+              {/* Existing proof image */}
+              {existingBukti && files.length === 0 && (
                 <div style={{ position: 'relative', width: '100px', height: '60px', borderRadius: '8px', overflow: 'hidden', border: '1px solid #E5E7EB' }}>
                   <img src={existingBukti} alt="old proof" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                   <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: '9px', fontWeight: 800 }}>LAMA</div>
                 </div>
               )}
+              
+              {/* File upload input */}
               <label style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '80px', border: '2px dashed #6366F1', borderRadius: '14px', background: '#F5F7FF', cursor: 'pointer', transition: 'all 0.2s' }}>
-                <input type="file" accept="image/*" style={{ display: 'none' }} onChange={e => setFile(e.target.files?.[0] ?? null)} />
-                <div style={{ fontSize: '12px', color: '#6366F1', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  {file ? <span>✓ {file.name}</span> : <span>📸 {editingId ? 'Ganti Bukti (Opsional)' : 'Upload Bukti (Opsional)'}</span>}
+                <input type="file" accept="image/*" multiple style={{ display: 'none' }} onChange={e => {
+                  const newFiles = Array.from(e.target.files ?? []);
+                  setFiles(prev => [...prev, ...newFiles]);
+                }} />
+                <div style={{ fontSize: '12px', color: '#6366F1', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '8px', textAlign: 'center' }}>
+                  {files.length > 0 ? (
+                    <span>✓ {files.length} foto dipilih</span>
+                  ) : (
+                    <span>📸 {editingId ? 'Ganti/Tambah Bukti (Opsional)' : 'Upload Bukti - Bisa Lebih dari 1 Foto'}</span>
+                  )}
                 </div>
               </label>
+              
+              {/* Selected files list */}
+              {files.length > 0 && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  {files.map((file, idx) => (
+                    <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 12px', background: '#EEF2FF', borderRadius: '8px', fontSize: '12px' }}>
+                      <span style={{ color: '#4F46E5', fontWeight: 600 }}>{file.name}</span>
+                      <button
+                        type="button"
+                        onClick={() => setFiles(prev => prev.filter((_, i) => i !== idx))}
+                        style={{ background: 'none', border: 'none', color: '#EF4444', cursor: 'pointer', fontSize: '14px', fontWeight: 800 }}
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
 
             <button onClick={handleSave} disabled={saving || !form.jumlah || !form.keterangan} style={{ width: '100%', padding: '14px', borderRadius: '14px', background: '#6366F1', color: 'white', border: 'none', fontSize: '14px', fontWeight: 800, cursor: 'pointer', fontFamily: 'Nunito, sans-serif', boxShadow: '0 4px 12px rgba(99, 102, 241, 0.2)', opacity: (saving || !form.jumlah || !form.keterangan) ? 0.5 : 1 }}>

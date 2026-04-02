@@ -22,6 +22,7 @@ function fmtKas(n: number): string {
 
 const QUICK_ACTIONS = [
   { label: 'Tambah Transaksi', href: '/admin/kas', icon: '+' },
+  { label: 'Lihat Arsip', href: '/admin/kas#archive', icon: '📦' },
   { label: 'Verifikasi Iuran', href: '/admin/iuran', icon: '✓' },
   { label: 'Upload Foto', href: '/admin/galeri', icon: '📸' },
   { label: 'Buat Event', href: '/admin/event', icon: '📅' },
@@ -147,7 +148,7 @@ export default function AdminDashboardPage() {
         {/* Quick Actions */}
         <div>
           <div className="animate-in" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-            <p style={{ fontSize: '11px', fontWeight: 800, letterSpacing: '1px', textTransform: 'uppercase', color: '#9CA3AF' }}>Kelola Data</p>
+            <p style={{ fontSize: '11px', fontWeight: 800, letterSpacing: '1px', textTransform: 'uppercase', color: '#9CA3AF' }}>Admin Tools</p>
             <div style={{ width: '40px', height: '1px', background: '#F3F4F6' }} />
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
