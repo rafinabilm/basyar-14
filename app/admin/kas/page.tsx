@@ -269,7 +269,7 @@ export default function AdminKasPage() {
                             onClick={() => {
                               setSelectedImages([t.foto_bukti_url!])
                               setSelectedTitle(t.keterangan)
-                              setImageViewerOpen(true)
+                              setTimeout(() => setImageViewerOpen(true), 0)
                             }}
                             style={{ fontSize: '9px', fontWeight: 800, color: '#6366F1', background: '#EEF2FF', padding: '3px 8px', borderRadius: '20px', display: 'inline-block', border: 'none', cursor: 'pointer', textDecoration: 'none' }}>
                             📄 Bukti

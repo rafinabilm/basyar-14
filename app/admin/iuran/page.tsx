@@ -399,7 +399,7 @@ export default function AdminIuranPage() {
                               onClick={() => {
                                 setSelectedImages([p.foto_bukti_url!])
                                 setSelectedTitle(`${p.anggota?.nama || 'Pembayaran'} - Rp${p.jumlah_bayar.toLocaleString('id-ID')}`)
-                                setImageViewerOpen(true)
+                                setTimeout(() => setImageViewerOpen(true), 0)
                               }}
                               style={{ 
                                 fontSize: '11px', 
@@ -423,7 +423,7 @@ export default function AdminIuranPage() {
                             onClick={() => {
                               setSelectedImages([p.foto_bukti_url!])
                               setSelectedTitle(`${p.anggota?.nama || 'Pembayaran'} - Rp${p.jumlah_bayar.toLocaleString('id-ID')}`)
-                              setImageViewerOpen(true)
+                              setTimeout(() => setImageViewerOpen(true), 0)
                             }}
                             style={{ 
                               fontSize: '11px', 

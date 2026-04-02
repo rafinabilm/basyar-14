@@ -82,6 +82,8 @@ export function ImageViewer({ isOpen, onClose, images, title, description }: Ima
           maxHeight: '90vh',
           display: 'flex',
           flexDirection: 'column',
+          zIndex: 1001,
+          position: 'relative'
         }}
         onClick={e => e.stopPropagation()}
       >
@@ -119,16 +121,35 @@ export function ImageViewer({ isOpen, onClose, images, title, description }: Ima
         <div 
           onTouchStart={handleTouchStart}
           onTouchEnd={handleTouchEnd}
-          style={{ position: 'relative', flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#F9FAFB', overflow: 'auto', minHeight: '300px', userSelect: 'none' }}>
-          <img
-            src={currentImage}
-            alt={`Image ${currentIndex + 1}`}
-            style={{
-              maxWidth: '100%',
-              maxHeight: '100%',
-              objectFit: 'contain',
-            }}
-          />
+          style={{ 
+            position: 'relative', 
+            flex: 1, 
+            display: 'flex', 
+            alignItems: 'center', 
+            justifyContent: 'center', 
+            background: '#F9FAFB', 
+            overflow: 'hidden',
+            minHeight: '300px', 
+            userSelect: 'none', 
+            width: '100%',
+            zIndex: 1001
+          }}>
+          {currentImage && (
+            <img
+              src={currentImage}
+              alt={`Image ${currentIndex + 1}`}
+              onError={(e) => console.error('Image load error:', currentImage, e)}
+              style={{
+                maxWidth: '100%',
+                maxHeight: '100%',
+                objectFit: 'contain',
+                zIndex: 1001
+              }}
+            />
+          )}
+          {!currentImage && (
+            <div style={{ color: '#9CA3AF', fontSize: '14px' }}>Gagal memuat gambar</div>
+          )}
 
           {/* Navigation Arrows */}
           {images.length > 1 && (

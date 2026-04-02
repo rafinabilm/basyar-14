@@ -93,7 +93,7 @@ export default function KasPage() {
                         onClick={() => {
                           setSelectedImages([t.foto_bukti_url!])
                           setSelectedTitle(t.keterangan)
-                          setImageViewerOpen(true)
+                          setTimeout(() => setImageViewerOpen(true), 0)
                         }}
                         style={{ marginTop: '8px', padding: '4px 8px', borderRadius: '8px', background: '#F3F4F6', border: 'none', color: '#6366F1', fontSize: '10px', fontWeight: 800, cursor: 'pointer' }}
                       >
