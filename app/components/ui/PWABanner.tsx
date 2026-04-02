@@ -110,14 +110,14 @@ export function PWABanner() {
         </div>
       </div>
       
-      <div className="flex items-center gap-2 shrink-0">
+      <div className="flex items-center gap-2 shrink-0 flex-nowrap min-w-max">
         <button 
           onClick={handleInstallClick}
-          className="bg-white text-indigo-600 text-[13px] font-bold px-5 py-2 rounded-full shadow hover:bg-slate-50 transition-colors shrink-0"
+          className="bg-white text-indigo-600 text-[13px] font-bold px-5 py-2 rounded-full shadow hover:bg-slate-50 transition-colors shrink-0 whitespace-nowrap"
         >
           Install
         </button>
-        <button onClick={handleDismiss} className="text-white/80 hover:text-white p-2 -mr-2 shrink-0 flex items-center justify-center">
+        <button onClick={handleDismiss} className="text-white/80 hover:text-white p-2 -mr-2 shrink-0 flex items-center justify-center whitespace-nowrap">
           <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
           </svg>
