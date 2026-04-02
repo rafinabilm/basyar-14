@@ -8,6 +8,8 @@ const VARIANTS = {
   green: { background: '#EEF2FF', border: '#E0E7FF', text: '#6366F1' },
   accent: { background: '#F5F3FF', border: '#EDE9FE', text: '#8B5CF6' },
   muted: { background: '#F3F4F6', border: '#E5E7EB', text: '#6B7280' },
+  warn: { background: '#FEF3C7', border: '#FCD34D', text: '#92400E' },
+  err: { background: '#FEE2E2', border: '#FECACA', text: '#DC2626' },
 }
 
 export function Pill({ label, variant = 'muted', styleOverride = {} }: PillProps) {

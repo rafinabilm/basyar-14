@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { verifikasiPembayaran } from './useIuran'
+import { verifikasiPembayaran, rejectPembayaranIuran } from './useIuran'
 import { supabase } from '@/app/lib/supabase'
 
 describe('useIuran - verifikasiPembayaran', () => {
@@ -71,5 +71,42 @@ describe('useIuran - verifikasiPembayaran', () => {
 
     const result = await verifikasiPembayaran('fail_id')
     expect(result.error).toEqual({ message: 'Fetch error' })
+  })
+})
+
+describe('useIuran - rejectPembayaranIuran', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  it('should update payment status to ditolak', async () => {
+    const mockPaymentId = 'p456'
+    
+    const mockUpdate = vi.fn().mockReturnValue({
+      eq: vi.fn().mockResolvedValue({ error: null }),
+    })
+
+    vi.spyOn(supabase, 'from').mockReturnValue({
+      update: mockUpdate,
+    } as any)
+
+    const result = await rejectPembayaranIuran(mockPaymentId)
+
+    expect(supabase.from).toHaveBeenCalledWith('pembayaran_iuran')
+    expect(mockUpdate).toHaveBeenCalledWith({ status: 'ditolak' })
+    expect(result.error).toBeNull()
+  })
+
+  it('should return error if update fails', async () => {
+    const mockError = { message: 'Database error' }
+    
+    vi.spyOn(supabase, 'from').mockReturnValue({
+      update: vi.fn().mockReturnValue({
+        eq: vi.fn().mockResolvedValue({ error: mockError }),
+      }),
+    } as any)
+
+    const result = await rejectPembayaranIuran('fail_id')
+    expect(result.error).toEqual(mockError)
   })
 })

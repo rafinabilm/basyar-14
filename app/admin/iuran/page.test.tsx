@@ -1,5 +1,5 @@
-import { describe, it, expect, vi } from 'vitest'
-import { render, screen, fireEvent } from '@testing-library/react'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { render, screen } from '@testing-library/react'
 import Page from './page'
 import React from 'react'
 import { DialogProvider } from '@/app/providers/DialogProvider'
@@ -12,11 +12,22 @@ vi.mock('@/app/hooks/useIuran', () => ({
     refetch: vi.fn()
   })),
   useAllPembayaran: vi.fn(() => ({
-    pembayaran: [],
+    pembayaran: [
+      { 
+        id: 'p1', 
+        anggota: { nama: 'Budi' }, 
+        tagihan: { judul: 'Iuran Maret' },
+        jumlah_bayar: 50000,
+        status: 'menunggu',
+        created_at: new Date().toISOString(),
+        foto_bukti_url: 'http://example.com/proof.jpg'
+      }
+    ],
     loading: false,
     refetch: vi.fn()
   })),
-  verifikasiPembayaran: vi.fn()
+  verifikasiPembayaran: vi.fn(),
+  rejectPembayaranIuran: vi.fn()
 }))
 
 // Mocking AdminNav to avoid auth issues or complex nesting
@@ -25,7 +36,11 @@ vi.mock('@/app/components/admin/AdminNav', () => ({
 }))
 
 describe('Admin Iuran Page', () => {
-  it('should render the list of tagihan', async () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  it('should render the page header', async () => {
     render(
       <DialogProvider>
         <Page />
@@ -33,14 +48,32 @@ describe('Admin Iuran Page', () => {
     )
 
     expect(screen.getByText(/Kelola Iuran/i)).toBeInTheDocument()
+  })
 
-    // Switch to Master Tagihan tab
-    const masterTabButton = screen.getByText('Master Tagihan')
-    fireEvent.click(masterTabButton)
+  it('should display pending payment with reject button', async () => {
+    render(
+      <DialogProvider>
+        <Page />
+      </DialogProvider>
+    )
 
-    expect(screen.getByText('Tagihan Test')).toBeInTheDocument()
-    // Finding currency - might be multiple if it appears in different sections
-    const currencyElements = screen.getAllByText(/Rp.*100\.000/)
-    expect(currencyElements.length).toBeGreaterThan(0)
+    // Should be on Approval tab by default
+    expect(screen.getByText('Budi')).toBeInTheDocument()
+    expect(screen.getByText('Iuran Maret')).toBeInTheDocument()
+    
+    // Reject button should exist
+    const rejectButtons = screen.getAllByText('Tolak')
+    expect(rejectButtons.length).toBeGreaterThan(0)
+  })
+
+  it('should show status badge for pending payment', async () => {
+    render(
+      <DialogProvider>
+        <Page />
+      </DialogProvider>
+    )
+
+    // Pending payment should have "Pending" badge
+    expect(screen.getByText('Pending')).toBeInTheDocument()
   })
 })

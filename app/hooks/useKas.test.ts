@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { renderHook, waitFor } from '@testing-library/react'
-import { useKas, insertTransaksi } from './useKas'
+import { useKas, insertTransaksi, deletePermanently } from './useKas'
 import { supabase } from '@/app/lib/supabase'
 
 describe('useKas', () => {
@@ -54,5 +54,42 @@ describe('useKas', () => {
     expect(mockInsert).toHaveBeenCalledWith([mockNewData])
     expect(result.error).toBeNull()
     expect(result.result?.id).toBe('3')
+  })
+})
+
+describe('useKas - deletePermanently', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  it('should delete transaction permanently from database', async () => {
+    const mockTransactionId = 'kas123'
+    
+    const mockDelete = vi.fn().mockReturnValue({
+      eq: vi.fn().mockResolvedValue({ error: null }),
+    })
+
+    vi.spyOn(supabase, 'from').mockReturnValue({
+      delete: mockDelete,
+    } as any)
+
+    const result = await deletePermanently(mockTransactionId)
+
+    expect(supabase.from).toHaveBeenCalledWith('transaksi_kas')
+    expect(mockDelete).toHaveBeenCalled()
+    expect(result.error).toBeNull()
+  })
+
+  it('should return error if delete fails', async () => {
+    const mockError = { message: 'Delete failed' }
+    
+    vi.spyOn(supabase, 'from').mockReturnValue({
+      delete: vi.fn().mockReturnValue({
+        eq: vi.fn().mockResolvedValue({ error: mockError }),
+      }),
+    } as any)
+
+    const result = await deletePermanently('fail_id')
+    expect(result.error).toEqual(mockError)
   })
 })

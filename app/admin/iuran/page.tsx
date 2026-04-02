@@ -5,7 +5,7 @@ import { PageHeader } from '@/app/components/ui/PageHeader'
 import { Card } from '@/app/components/ui/Card'
 import { Pill } from '@/app/components/ui/Pill'
 import { EmptyState } from '@/app/components/ui/EmptyState'
-import { useAllPembayaran, verifikasiPembayaran, useAllTagihan } from '@/app/hooks/useIuran'
+import { useAllPembayaran, verifikasiPembayaran, rejectPembayaranIuran, useAllTagihan } from '@/app/hooks/useIuran'
 import { supabase } from '@/app/lib/supabase'
 import { useDialog } from '@/app/providers/DialogProvider'
 
@@ -20,6 +20,7 @@ export default function AdminIuranPage() {
   
   const [tab, setTab] = useState<'pembayaran'|'tagihan'>('pembayaran')
   const [verifying, setVerifying] = useState<string | null>(null)
+  const [rejecting, setRejecting] = useState<string | null>(null)
   const [showForm, setShowForm] = useState(false)
   const [saving, setSaving] = useState(false)
   const [form, setForm] = useState({
@@ -70,6 +71,24 @@ export default function AdminIuranPage() {
     if (error) showAlert('Gagal verifikasi: ' + error.message)
     else refetchPembayaran()
     setVerifying(null)
+  }
+
+  async function handleReject(id: string, namaAnggota: string) {
+    const isConfirmed = await showConfirm({
+      title: 'Tolak Pembayaran',
+      message: `Tolak pembayaran dari ${namaAnggota}? Mereka dapat mengirim ulang bukti pembayaran.`,
+      isDestructive: true
+    })
+    if (!isConfirmed) return
+
+    setRejecting(id)
+    const { error } = await rejectPembayaranIuran(id)
+    if (error) showAlert('Gagal menolak: ' + error.message)
+    else {
+      refetchPembayaran()
+      showAlert('Pembayaran berhasil ditolak')
+    }
+    setRejecting(null)
   }
 
   function handleTutupForm() {
@@ -315,7 +334,10 @@ export default function AdminIuranPage() {
                     <div style={{ flex: 1 }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
                         <span style={{ fontSize: '15px', fontWeight: 800, color: '#111827' }}>{p.anggota?.nama || 'Unknown'}</span>
-                        <Pill label={p.status === 'menunggu' ? 'Pending' : 'Lunas'} variant={p.status === 'menunggu' ? 'accent' : 'green'} />
+                        <Pill 
+                          label={p.status === 'menunggu' ? 'Pending' : p.status === 'lunas' ? 'Lunas' : 'Ditolak'} 
+                          variant={p.status === 'menunggu' ? 'accent' : p.status === 'lunas' ? 'green' : 'err'} 
+                        />
                       </div>
                       <div style={{ fontSize: '12px', color: '#6B7280', fontWeight: 500 }}>{p.tagihan?.judul || 'Tagihan Tanpa Judul'}</div>
                       <div style={{ fontSize: '18px', fontWeight: 800, color: '#6366F1', fontFamily: 'Space Grotesk, monospace', marginTop: '8px' }}>
@@ -328,7 +350,7 @@ export default function AdminIuranPage() {
                     </div>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', alignItems: 'flex-end', marginLeft: '12px' }}>
                       {p.status === 'menunggu' ? (
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', width: '100%' }}>
                            <button 
                             onClick={() => handleVerifikasi(p.id)} 
                             disabled={verifying === p.id} 
@@ -343,10 +365,30 @@ export default function AdminIuranPage() {
                               cursor: 'pointer', 
                               fontFamily: 'Nunito, sans-serif',
                               boxShadow: '0 4px 10px rgba(99, 102, 241, 0.2)',
-                              opacity: verifying === p.id ? 0.6 : 1
+                              opacity: verifying === p.id ? 0.6 : 1,
+                              whiteSpace: 'nowrap'
                             }}
                           >
                             {verifying === p.id ? 'Loading...' : 'Verifikasi'}
+                          </button>
+                          <button 
+                            onClick={() => handleReject(p.id, p.anggota?.nama || 'Anggota')} 
+                            disabled={rejecting === p.id} 
+                            style={{ 
+                              fontSize: '12px', 
+                              fontWeight: 800, 
+                              background: '#FEE2E2', 
+                              color: '#DC2626', 
+                              border: 'none', 
+                              padding: '8px 16px', 
+                              borderRadius: '10px', 
+                              cursor: 'pointer', 
+                              fontFamily: 'Nunito, sans-serif',
+                              opacity: rejecting === p.id ? 0.6 : 1,
+                              whiteSpace: 'nowrap'
+                            }}
+                          >
+                            {rejecting === p.id ? 'Loading...' : 'Tolak'}
                           </button>
                           {p.foto_bukti_url && (
                              <a 

@@ -35,7 +35,12 @@ function ArchiveModal({ isOpen, onClose, onRefresh }: { isOpen: boolean, onClose
   }
 
   async function handleDelete(id: string) {
-    const conf = await showConfirm({ title: 'Hapus Permanen', message: 'Transaksi akan dihapus selamanya dari database. Lanjutkan?', isDestructive: true })
+    const transaction = archived.find(t => t.id === id)
+    const conf = await showConfirm({ 
+      title: 'Hapus Permanen', 
+      message: `Hapus transaksi "${transaction?.keterangan}" (${fmt(transaction?.jumlah || 0)})?\n\nTindakan ini TIDAK BISA DIBATALKAN dan akan dihapus selamanya dari database.`, 
+      isDestructive: true 
+    })
     if (!conf) return
     const { error } = await deletePermanently(id)
     if (error) showAlert('Gagal hapus: ' + error.message)

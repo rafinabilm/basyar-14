@@ -179,3 +179,12 @@ export async function verifikasiPembayaran(id: string) {
 
   return { error: null }
 }
+
+export async function rejectPembayaranIuran(id: string) {
+  const { error } = await supabase
+    .from('pembayaran_iuran')
+    .update({ status: 'ditolak' })
+    .eq('id', id)
+
+  return { error }
+}
