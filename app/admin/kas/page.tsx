@@ -57,7 +57,28 @@ function ArchiveModal({ isOpen, onClose, onRefresh }: { isOpen: boolean, onClose
             <h3 style={{ fontSize: '18px', fontWeight: 800, color: '#111827' }}>Arsip Kas</h3>
             <p style={{ fontSize: '12px', color: '#9CA3AF' }}>Data yang dibatalkan/dihapus sementara.</p>
           </div>
-          <button onClick={onClose} style={{ border: 'none', background: 'none', fontSize: '24px', color: '#9CA3AF', cursor: 'pointer' }}>×</button>
+          <button 
+            onClick={onClose} 
+            type="button"
+            style={{ 
+              border: 'none', 
+              background: '#F3F4F6',
+              width: '36px',
+              height: '36px',
+              borderRadius: '8px',
+              fontSize: '24px', 
+              color: '#9CA3AF', 
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              transition: 'all 0.2s'
+            }}
+            onMouseEnter={(e) => (e.currentTarget.style.background = '#E5E7EB')}
+            onMouseLeave={(e) => (e.currentTarget.style.background = '#F3F4F6')}
+          >
+            ×
+          </button>
         </div>
         
         <div style={{ flex: 1, overflowY: 'auto', padding: '20px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
@@ -119,8 +140,11 @@ export default function AdminKasPage() {
     const conf = await showConfirm({ title: 'Arsipkan?', message: 'Data akan dipindahkan ke folder arsip (pembatalan). Lanjutkan?', isDestructive: true })
     if (!conf) return
     const { error } = await archiveTransaksi(id)
-    if (error) showAlert('Gagal arsip')
-    else refetch()
+    if (error) showAlert('Gagal arsip: ' + error.message)
+    else {
+      showAlert('Transaksi berhasil diarsipkan')
+      refetch()
+    }
   }
 
   async function handleSave() {

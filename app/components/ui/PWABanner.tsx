@@ -1,15 +1,20 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { usePathname } from 'next/navigation'
 import { useDialog } from '@/app/providers/DialogProvider'
 
 export function PWABanner() {
+  const pathname = usePathname()
   const [isStandalone, setIsStandalone] = useState(true) // default true to avoid flash on standalone
   const [isIOS, setIsIOS] = useState(false)
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null)
   const [isDismissed, setIsDismissed] = useState(true)
   const [mounted, setMounted] = useState(false)
   const { showConfirm, showAlert } = useDialog()
+
+  // Hide PWA banner on admin routes
+  const isAdminRoute = pathname.startsWith('/admin')
 
   useEffect(() => {
     setMounted(true)
@@ -48,7 +53,7 @@ export function PWABanner() {
     return () => window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt)
   }, [])
 
-  if (!mounted || isStandalone || isDismissed) return null
+  if (!mounted || isStandalone || isDismissed || isAdminRoute) return null
   if (!isIOS && !deferredPrompt) return null // Only show on iOS or if Android prompt is ready
 
   const handleInstallClick = async (e?: React.MouseEvent) => {
