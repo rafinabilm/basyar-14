@@ -89,28 +89,36 @@ export function PWABanner() {
   }
 
   return (
-    <div className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-4 py-3 flex items-center justify-between shadow-md sticky top-0 z-50 animate-in no-animate">
-      <div className="flex items-center gap-3 cursor-pointer" onClick={handleInstallClick}>
-        <div className="bg-white/20 p-2 rounded-xl">
-          <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <div 
+      className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white flex items-center justify-between shadow-md sticky top-0 z-50 animate-in no-animate"
+      style={{
+        paddingTop: 'max(12px, env(safe-area-inset-top))',
+        paddingRight: 'max(20px, env(safe-area-inset-right))',
+        paddingBottom: '12px',
+        paddingLeft: 'max(20px, env(safe-area-inset-left))'
+      }}
+    >
+      <div className="flex items-center gap-3 cursor-pointer overflow-hidden pr-2" onClick={handleInstallClick}>
+        <div className="bg-white/20 p-2 rounded-xl shrink-0">
+          <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
           </svg>
         </div>
-        <div>
-          <h3 className="font-bold text-sm">Install Basyar-14</h3>
-          <p className="text-xs text-indigo-100 leading-tight">Akses lebih cepat & offline</p>
+        <div className="truncate">
+          <h3 className="font-bold text-[13px] leading-tight text-white truncate">Install Website Basyar-14</h3>
+          <p className="text-[11px] text-indigo-100 leading-tight mt-0.5 truncate">di Home Screen HP</p>
         </div>
       </div>
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 shrink-0">
         <button 
           onClick={handleInstallClick}
-          className="bg-white text-indigo-600 text-xs font-bold px-3 py-1.5 rounded-full shadow-sm hover:bg-indigo-50 transition-colors"
+          className="bg-white text-indigo-600 text-[11px] font-bold px-3 py-1.5 rounded-full shadow-sm hover:bg-indigo-50 transition-colors"
         >
           Install
         </button>
-        <button onClick={handleDismiss} className="text-white/70 hover:text-white p-1">
+        <button onClick={handleDismiss} className="text-white/80 hover:text-white p-1.5 -mr-1.5 shrink-0">
           <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
           </svg>
         </button>
       </div>
