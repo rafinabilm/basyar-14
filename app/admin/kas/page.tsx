@@ -4,6 +4,7 @@ import { useState, useCallback, useEffect } from 'react'
 import { PageHeader } from '@/app/components/ui/PageHeader'
 import { Card } from '@/app/components/ui/Card'
 import { EmptyState } from '@/app/components/ui/EmptyState'
+import { ImageViewer } from '@/app/components/ui/ImageViewer'
 import { useKas, insertTransaksi, updateTransaksi, archiveTransaksi, restoreTransaksi, deletePermanently, getArchivedKas, TransaksiKas } from '@/app/hooks/useKas'
 import { uploadFile } from '@/app/hooks/useUpload'
 import { useDialog } from '@/app/providers/DialogProvider'
@@ -12,110 +13,15 @@ function fmt(n: number) {
   return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(Math.abs(n))
 }
 
-function ArchiveModal({ isOpen, onClose, onRefresh }: { isOpen: boolean, onClose: () => void, onRefresh: () => void }) {
-  const [archived, setArchived] = useState<TransaksiKas[]>([])
-  const [loading, setLoading] = useState(true)
-  const { showConfirm, showAlert } = useDialog()
-
-  const fetchArchived = useCallback(async () => {
-    setLoading(true)
-    const { data } = await getArchivedKas()
-    setArchived(data || [])
-    setLoading(false)
-  }, [])
-
-  useEffect(() => {
-    if (isOpen) fetchArchived()
-  }, [isOpen, fetchArchived])
-
-  async function handleRestore(id: string) {
-    const { error } = await restoreTransaksi(id)
-    if (error) showAlert('Gagal restore: ' + error.message)
-    else { fetchArchived(); onRefresh() }
-  }
-
-  async function handleDelete(id: string) {
-    const transaction = archived.find(t => t.id === id)
-    const conf = await showConfirm({ 
-      title: 'Hapus Permanen', 
-      message: `Hapus transaksi "${transaction?.keterangan}" (${fmt(transaction?.jumlah || 0)})?\n\nTindakan ini TIDAK BISA DIBATALKAN dan akan dihapus selamanya dari database.`, 
-      isDestructive: true 
-    })
-    if (!conf) return
-    const { error } = await deletePermanently(id)
-    if (error) showAlert('Gagal hapus: ' + error.message)
-    else fetchArchived()
-  }
-
-  if (!isOpen) return null
-
-  return (
-    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
-      <div className="animate-in" style={{ background: 'white', borderRadius: '24px', width: '100%', maxWidth: '400px', maxHeight: '80vh', display: 'flex', flexDirection: 'column', overflow: 'hidden', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)' }}>
-        <div style={{ padding: '20px', borderBottom: '1px solid #F3F4F6', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <div>
-            <h3 style={{ fontSize: '18px', fontWeight: 800, color: '#111827' }}>Arsip Kas</h3>
-            <p style={{ fontSize: '12px', color: '#9CA3AF' }}>Data yang dibatalkan/dihapus sementara.</p>
-          </div>
-          <button 
-            onClick={onClose} 
-            type="button"
-            style={{ 
-              border: 'none', 
-              background: '#F3F4F6',
-              width: '36px',
-              height: '36px',
-              borderRadius: '8px',
-              fontSize: '24px', 
-              color: '#9CA3AF', 
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              transition: 'all 0.2s'
-            }}
-            onMouseEnter={(e) => (e.currentTarget.style.background = '#E5E7EB')}
-            onMouseLeave={(e) => (e.currentTarget.style.background = '#F3F4F6')}
-          >
-            ×
-          </button>
-        </div>
-        
-        <div style={{ flex: 1, overflowY: 'auto', padding: '20px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-          {loading ? (
-            <div style={{ textAlign: 'center', color: '#9CA3AF', padding: '20px' }}>Memuat arsip...</div>
-          ) : archived.length === 0 ? (
-            <div style={{ textAlign: 'center', color: '#9CA3AF', padding: '20px' }}>Tidak ada data di arsip.</div>
-          ) : (
-            archived.map(t => (
-              <div key={t.id} style={{ padding: '12px', borderRadius: '16px', border: '1px solid #F3F4F6', background: '#F9FAFB' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                  <div>
-                    <div style={{ fontSize: '14px', fontWeight: 700, color: '#4B5563' }}>{t.keterangan}</div>
-                    <div style={{ fontSize: '12px', color: '#9CA3AF' }}>{fmt(t.jumlah)} • {new Date(t.tanggal).toLocaleDateString()}</div>
-                  </div>
-                </div>
-                <div style={{ display: 'flex', gap: '8px', marginTop: '10px' }}>
-                  <button onClick={() => handleRestore(t.id)} style={{ flex: 1, padding: '8px', borderRadius: '8px', background: '#EEF2FF', color: '#6366F1', border: 'none', fontSize: '11px', fontWeight: 800, cursor: 'pointer' }}>Kembalikan</button>
-                  <button onClick={() => handleDelete(t.id)} style={{ padding: '8px', borderRadius: '8px', background: '#FEF2F2', color: '#EF4444', border: 'none', fontSize: '11px', fontWeight: 800, cursor: 'pointer' }}>Hapus</button>
-                </div>
-              </div>
-            ))
-          )}
-        </div>
-      </div>
-    </div>
-  )
-}
-
-
 export default function AdminKasPage() {
   const { transaksi, saldo, totalMasuk, totalKeluar, loading, refetch } = useKas()
   const { showAlert, showConfirm } = useDialog()
   const [showForm, setShowForm] = useState(false)
-  const [showArchive, setShowArchive] = useState(false)
   const [saving, setSaving] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
+  const [imageViewerOpen, setImageViewerOpen] = useState(false)
+  const [selectedImages, setSelectedImages] = useState<string[]>([])
+  const [selectedTitle, setSelectedTitle] = useState('')
   
   const initialForm = { jenis: 'pengeluaran', jumlah: '', keterangan: '', kategori: 'lainnya', tanggal: new Date().toISOString().split('T')[0] }
   const [form, setForm] = useState(initialForm)
@@ -184,36 +90,28 @@ export default function AdminKasPage() {
     <main style={{ paddingBottom: '120px' }}>
       <div style={{ padding: '32px 20px 8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <PageHeader title="Kelola Kas" subtitle="Monitoring dan pencatatan kas." />
-        <div style={{ display: 'flex', gap: '8px' }}>
-          <button 
-            onClick={() => setShowArchive(true)}
-            style={{ width: '42px', height: '42px', borderRadius: '12px', background: '#F9FAFB', border: '1px solid #F3F4F6', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
-          >
-            <svg viewBox="0 0 24 24" fill="none" stroke="#6B7280" style={{ width: '20px', height: '20px' }} strokeWidth={2.5}><path d="M21 8H3V6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v2zM5 8v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8M10 12h4" /></svg>
-          </button>
-          <button 
-            onClick={() => {
-              if (showForm) { setShowForm(false); setEditingId(null); setForm(initialForm) }
-              else setShowForm(true)
-            }} 
-            style={{ 
-              background: showForm ? '#F3F4F6' : '#6366F1', 
-              color: showForm ? '#6B7280' : 'white', 
-              border: 'none', 
-              borderRadius: '12px', 
-              padding: '10px 18px', 
-              fontSize: '13px', 
-              fontWeight: 800, 
-              cursor: 'pointer', 
-              fontFamily: 'Nunito, sans-serif', 
-              flexShrink: 0,
-              boxShadow: showForm ? 'none' : '0 4px 12px rgba(99, 102, 241, 0.2)',
-              transition: 'all 0.2s'
+        <button 
+          onClick={() => {
+            if (showForm) { setShowForm(false); setEditingId(null); setForm(initialForm) }
+            else setShowForm(true)
+          }} 
+          style={{ 
+            background: showForm ? '#F3F4F6' : '#6366F1', 
+            color: showForm ? '#6B7280' : 'white', 
+            border: 'none', 
+            borderRadius: '12px', 
+            padding: '10px 18px', 
+            fontSize: '13px', 
+            fontWeight: 800, 
+            cursor: 'pointer', 
+            fontFamily: 'Nunito, sans-serif', 
+            flexShrink: 0,
+            boxShadow: showForm ? 'none' : '0 4px 12px rgba(99, 102, 241, 0.2)',
+            transition: 'all 0.2s'
             }}
           >
             {showForm ? 'Batal' : '+ Tambah'}
           </button>
-        </div>
       </div>
 
       <div style={{ padding: '0 20px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
@@ -367,9 +265,15 @@ export default function AdminKasPage() {
                       <div style={{ fontSize: '12px', color: '#9CA3AF', marginTop: '2px' }}>{new Date(t.tanggal).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}</div>
                       <div style={{ display: 'flex', gap: '6px', alignItems: 'center', marginTop: '6px' }}>
                         {t.foto_bukti_url && (
-                          <a href={t.foto_bukti_url} target="_blank" rel="noreferrer" style={{ fontSize: '9px', fontWeight: 800, color: '#6366F1', background: '#EEF2FF', padding: '3px 8px', borderRadius: '20px', display: 'inline-block', textDecoration: 'none' }}>
+                          <button 
+                            onClick={() => {
+                              setSelectedImages([t.foto_bukti_url!])
+                              setSelectedTitle(t.keterangan)
+                              setImageViewerOpen(true)
+                            }}
+                            style={{ fontSize: '9px', fontWeight: 800, color: '#6366F1', background: '#EEF2FF', padding: '3px 8px', borderRadius: '20px', display: 'inline-block', border: 'none', cursor: 'pointer', textDecoration: 'none' }}>
                             📄 Bukti
-                          </a>
+                          </button>
                         )}
                         <button onClick={() => handleEdit(t)} style={{ fontSize: '9px', fontWeight: 800, color: '#4B5563', background: '#F3F4F6', padding: '3px 8px', borderRadius: '20px', border: 'none', cursor: 'pointer' }}>Edit</button>
                         <button onClick={() => handleArchive(t.id)} style={{ fontSize: '9px', fontWeight: 800, color: '#EF4444', background: '#FEF2F2', padding: '3px 8px', borderRadius: '20px', border: 'none', cursor: 'pointer' }}>Arsip</button>
@@ -389,7 +293,13 @@ export default function AdminKasPage() {
         </div>
       </div>
       
-      <ArchiveModal isOpen={showArchive} onClose={() => setShowArchive(false)} onRefresh={refetch} />
+      <ImageViewer
+        isOpen={imageViewerOpen}
+        onClose={() => setImageViewerOpen(false)}
+        images={selectedImages}
+        title="Bukti Transaksi"
+        description={selectedTitle}
+      />
     </main>
   )
 }

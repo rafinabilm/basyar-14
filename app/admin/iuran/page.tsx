@@ -5,6 +5,7 @@ import { PageHeader } from '@/app/components/ui/PageHeader'
 import { Card } from '@/app/components/ui/Card'
 import { Pill } from '@/app/components/ui/Pill'
 import { EmptyState } from '@/app/components/ui/EmptyState'
+import { ImageViewer } from '@/app/components/ui/ImageViewer'
 import { useAllPembayaran, verifikasiPembayaran, rejectPembayaranIuran, useAllTagihan } from '@/app/hooks/useIuran'
 import { supabase } from '@/app/lib/supabase'
 import { useDialog } from '@/app/providers/DialogProvider'
@@ -23,6 +24,9 @@ export default function AdminIuranPage() {
   const [rejecting, setRejecting] = useState<string | null>(null)
   const [showForm, setShowForm] = useState(false)
   const [saving, setSaving] = useState(false)
+  const [imageViewerOpen, setImageViewerOpen] = useState(false)
+  const [selectedImages, setSelectedImages] = useState<string[]>([])
+  const [selectedTitle, setSelectedTitle] = useState('')
   const [form, setForm] = useState({
     judul: '',
     nominal: '',
@@ -391,10 +395,12 @@ export default function AdminIuranPage() {
                             {rejecting === p.id ? 'Loading...' : 'Tolak'}
                           </button>
                           {p.foto_bukti_url && (
-                             <a 
-                              href={p.foto_bukti_url} 
-                              target="_blank" 
-                              rel="noreferrer" 
+                             <button 
+                              onClick={() => {
+                                setSelectedImages([p.foto_bukti_url!])
+                                setSelectedTitle(`${p.anggota?.nama || 'Pembayaran'} - Rp${p.jumlah_bayar.toLocaleString('id-ID')}`)
+                                setImageViewerOpen(true)
+                              }}
                               style={{ 
                                 fontSize: '11px', 
                                 fontWeight: 800, 
@@ -402,20 +408,23 @@ export default function AdminIuranPage() {
                                 color: '#6366F1', 
                                 padding: '8px 16px', 
                                 borderRadius: '10px', 
-                                textDecoration: 'none',
+                                border: 'none',
+                                cursor: 'pointer',
                                 textAlign: 'center'
                               }}
                             >
                                Cek Bukti
-                             </a>
+                             </button>
                           )}
                         </div>
                       ) : (
                         p.foto_bukti_url && (
-                           <a 
-                            href={p.foto_bukti_url} 
-                            target="_blank" 
-                            rel="noreferrer" 
+                           <button 
+                            onClick={() => {
+                              setSelectedImages([p.foto_bukti_url!])
+                              setSelectedTitle(`${p.anggota?.nama || 'Pembayaran'} - Rp${p.jumlah_bayar.toLocaleString('id-ID')}`)
+                              setImageViewerOpen(true)
+                            }}
                             style={{ 
                               fontSize: '11px', 
                               fontWeight: 800, 
@@ -423,11 +432,12 @@ export default function AdminIuranPage() {
                               color: '#9CA3AF', 
                               padding: '6px 12px', 
                               borderRadius: '8px', 
-                              textDecoration: 'none'
+                              border: 'none',
+                              cursor: 'pointer'
                             }}
                           >
                             Lihat Bukti
-                           </a>
+                           </button>
                         )
                       )}
                     </div>
@@ -467,7 +477,7 @@ export default function AdminIuranPage() {
                      </div>
                      <div style={{ display: 'flex', gap: '6px' }}>
                        <button onClick={() => handleEditTagihan(t)} style={{ background: '#F3F4F6', color: '#4B5563', border: 'none', padding: '6px 12px', borderRadius: '10px', fontSize: '11px', fontWeight: 800, cursor: 'pointer' }}>Edit</button>
-                       <button onClick={() => handleHapusTagihan(t)} style={{ background: '#FFF1F2', color: '#EF4444', border: 'none', padding: '6px 12px', borderRadius: '10px', fontSize: '11px', fontWeight: 800, cursor: 'pointer' }}>Del</button>
+                       <button onClick={() => handleHapusTagihan(t)} style={{ background: '#FFF1F2', color: '#EF4444', border: 'none', padding: '6px 12px', borderRadius: '10px', fontSize: '11px', fontWeight: 800, cursor: 'pointer' }}>Hapus</button>
                      </div>
                    </div>
                  </Card>
@@ -476,6 +486,14 @@ export default function AdminIuranPage() {
           </div>
         )}
       </div>
+
+      <ImageViewer
+        isOpen={imageViewerOpen}
+        onClose={() => setImageViewerOpen(false)}
+        images={selectedImages}
+        title="Bukti Pembayaran"
+        description={selectedTitle}
+      />
     </main>
   )
 }

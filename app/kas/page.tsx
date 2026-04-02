@@ -4,8 +4,8 @@ import { useState } from 'react'
 import { SaldoCard } from '@/app/components/ui/SaldoCard'
 import { Card } from '@/app/components/ui/Card'
 import { EmptyState } from '@/app/components/ui/EmptyState'
+import { ImageViewer } from '@/app/components/ui/ImageViewer'
 import { useKas } from '@/app/hooks/useKas'
-import { useDialog } from '@/app/providers/DialogProvider'
 
 function fmt(n: number) {
   return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(Math.abs(n))
@@ -13,8 +13,10 @@ function fmt(n: number) {
 
 export default function KasPage() {
   const { transaksi, loading } = useKas()
-  const { showAlert } = useDialog()
   const [filter, setFilter] = useState<'semua' | 'pemasukan' | 'pengeluaran'>('semua')
+  const [imageViewerOpen, setImageViewerOpen] = useState(false)
+  const [selectedImages, setSelectedImages] = useState<string[]>([])
+  const [selectedTitle, setSelectedTitle] = useState('')
 
   const filtered = transaksi.filter(t => filter === 'semua' ? true : t.jenis === filter)
   const saldo = transaksi.reduce((acc, t) => t.jenis === 'pemasukan' ? acc + t.jumlah : acc - t.jumlah, 0)
@@ -88,15 +90,11 @@ export default function KasPage() {
                     
                     {t.foto_bukti_url && (
                       <button 
-                        onClick={() => showAlert({
-                          title: 'Bukti Transaksi',
-                          message: (
-                            <div style={{ textAlign: 'center' }}>
-                              <img src={t.foto_bukti_url} alt="Bukti Transfer" style={{ width: '100%', borderRadius: '12px', marginBottom: '12px' }} />
-                              <p style={{ fontSize: '14px', fontWeight: 700, color: '#111827' }}>{t.keterangan}</p>
-                            </div>
-                          )
-                        })}
+                        onClick={() => {
+                          setSelectedImages([t.foto_bukti_url!])
+                          setSelectedTitle(t.keterangan)
+                          setImageViewerOpen(true)
+                        }}
                         style={{ marginTop: '8px', padding: '4px 8px', borderRadius: '8px', background: '#F3F4F6', border: 'none', color: '#6366F1', fontSize: '10px', fontWeight: 800, cursor: 'pointer' }}
                       >
                         Lihat Bukti
@@ -109,6 +107,14 @@ export default function KasPage() {
           </div>
         )}
       </div>
+
+      <ImageViewer
+        isOpen={imageViewerOpen}
+        onClose={() => setImageViewerOpen(false)}
+        images={selectedImages}
+        title="Bukti Transaksi"
+        description={selectedTitle}
+      />
     </main>
   )
 }
