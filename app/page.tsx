@@ -77,14 +77,14 @@ export default async function HomePage() {
             iconBg="#F5F3FF"
           />
           <StatCard 
-            label="Pemasukan" 
-            value={fmtShort(monthMasuk)} 
+            label="Pemasukan Total" 
+            value={fmtShort(totalMasuk)} 
             icon={<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" style={{ width: '18px', height: '18px' }} strokeWidth={2.5}><polyline points="23 6 13.5 15.5 8.5 10.5 1 18" /><polyline points="17 6 23 6 23 12" /></svg>}
             iconBg="#ECFDF5"
           />
           <StatCard 
-            label="Pengeluaran" 
-            value={fmtShort(monthKeluar)} 
+            label="Pengeluaran Total" 
+            value={fmtShort(totalKeluar)} 
             icon={<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" style={{ width: '18px', height: '18px' }} strokeWidth={2.5}><rect x="1" y="4" width="22" height="16" rx="2" /><line x1="1" y1="10" x2="23" y2="10" /></svg>}
             iconBg="#FFF1F2"
           />
