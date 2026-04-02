@@ -109,10 +109,10 @@ export function PWABanner() {
           <p className="text-[11px] text-indigo-100 leading-tight mt-0.5 truncate">di Home Screen HP</p>
         </div>
       </div>
-      <div className="flex items-center gap-2 shrink-0">
+      <div className="flex items-center gap-2 shrink-0 flex-nowrap">
         <button 
           onClick={handleInstallClick}
-          className="bg-white text-indigo-600 text-[11px] font-bold px-3 py-1.5 rounded-full shadow-sm hover:bg-indigo-50 transition-colors"
+          className="bg-white text-indigo-600 text-xs font-bold px-4 py-1.5 rounded-full shadow-sm hover:bg-indigo-50 transition-colors whitespace-nowrap shrink-0"
         >
           Install
         </button>
