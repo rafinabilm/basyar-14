@@ -90,38 +90,56 @@ export function PWABanner() {
 
   return (
     <div 
-      className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white flex items-center justify-between shadow-md sticky top-0 z-50 animate-in no-animate gap-2"
+      className="bg-gradient-to-r from-indigo-600 to-purple-600 shadow-md sticky top-0 z-50 w-full overflow-hidden animate-in no-animate"
       style={{
         paddingTop: 'max(14px, env(safe-area-inset-top))',
-        paddingRight: 'max(16px, env(safe-area-inset-right))',
         paddingBottom: '14px',
-        paddingLeft: 'max(16px, env(safe-area-inset-left))'
       }}
     >
-      <div className="flex items-center gap-3 cursor-pointer flex-1 min-w-0" onClick={handleInstallClick}>
-        <div className="bg-white/20 p-2 rounded-[14px] shrink-0">
-          <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-          </svg>
+      <div 
+        className="flex items-center justify-between w-full"
+        style={{
+          paddingRight: 'max(16px, env(safe-area-inset-right))',
+          paddingLeft: 'max(16px, env(safe-area-inset-left))'
+        }}
+      >
+        {/* Left Section */}
+        <div className="flex items-center gap-3 cursor-pointer overflow-hidden flex-1" onClick={handleInstallClick}>
+          <div className="bg-white/20 p-2 rounded-[14px] flex-none">
+            <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+            </svg>
+          </div>
+          <div className="flex flex-col min-w-0">
+            <h3 className="font-bold text-[14px] leading-tight text-white truncate">
+              Install Basyar-14
+            </h3>
+            <p className="text-[12px] text-indigo-100 leading-tight mt-[3px] truncate">
+              di Home Screen HP
+            </p>
+          </div>
         </div>
-        <div className="flex flex-col flex-1 min-w-0">
-          <h3 className="font-bold text-[14px] leading-tight text-white truncate">Install Website Basyar-14</h3>
-          <p className="text-[12px] text-indigo-100 leading-tight mt-[3px] truncate">di Home Screen HP</p>
+        
+        {/* Right Section */}
+        <div className="flex items-center gap-2 ml-3 flex-none">
+          <button 
+            onClick={handleInstallClick}
+            className="bg-white text-indigo-600 font-bold px-5 py-2 rounded-full shadow hover:bg-slate-50 transition-colors flex-none flex items-center justify-center whitespace-nowrap"
+            style={{ fontSize: '13px', border: 'none', appearance: 'none' }}
+          >
+            <span>Install</span>
+          </button>
+          
+          <button 
+            onClick={handleDismiss} 
+            className="text-white/80 hover:text-white p-2 -mr-2 flex-none flex items-center justify-center"
+            style={{ border: 'none', appearance: 'none', background: 'transparent' }}
+          >
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
         </div>
-      </div>
-      
-      <div className="flex items-center gap-2 shrink-0 flex-nowrap min-w-max">
-        <button 
-          onClick={handleInstallClick}
-          className="bg-white text-indigo-600 text-[13px] font-bold px-5 py-2 rounded-full shadow hover:bg-slate-50 transition-colors shrink-0 whitespace-nowrap"
-        >
-          Install
-        </button>
-        <button onClick={handleDismiss} className="text-white/80 hover:text-white p-2 -mr-2 shrink-0 flex items-center justify-center whitespace-nowrap">
-          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
-          </svg>
-        </button>
       </div>
     </div>
   )
