@@ -23,7 +23,7 @@ export default function IuranPage() {
   const [searchTerm, setSearchTerm] = useState('')
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [jumlah, setJumlah] = useState('')
-  const [file, setFile] = useState<File | null>(null)
+  const [files, setFiles] = useState<File[]>([])
   const [submitting, setSubmitting] = useState(false)
   const [submitted, setSubmitted] = useState(false)
   const [rekening, setRekening] = useState<{bank_name?: string, account_number?: string, account_name?: string} | null>(null)
@@ -76,20 +76,29 @@ export default function IuranPage() {
     // Strip dots before parsing
     const rawJumlah = jumlah.replace(/\./g, '')
     
-    if (!anggotaId || !file || !rawJumlah) {
-      showAlert('Mohon lengkapi semua data dan bukti transfer.')
+    if (!anggotaId || files.length === 0 || !rawJumlah) {
+      showAlert('Mohon lengkapi semua data dan bukti transfer (minimal 1 foto).')
       return
     }
     setSubmitting(true)
 
-    const url = await uploadFile(file, 'basyar14/iuran')
-    if (!url) { setSubmitting(false); showAlert('Gagal upload foto bukti.'); return }
+    const uploadedUrls: string[] = []
+    for (const file of files) {
+      const url = await uploadFile(file, 'basyar14/iuran')
+      if (url) uploadedUrls.push(url)
+    }
+    
+    if (uploadedUrls.length === 0) { 
+      setSubmitting(false)
+      showAlert('Gagal upload foto bukti.')
+      return 
+    }
 
     const { error } = await submitPembayaran({
       anggota_id: anggotaId,
       tagihan_id: selectedTagihanId === 'donasi' ? (null as any) : selectedTagihanId,
       jumlah_bayar: parseInt(rawJumlah),
-      foto_bukti_url: url,
+      foto_bukti_urls: uploadedUrls,
     })
 
     setSubmitting(false)
@@ -102,7 +111,7 @@ export default function IuranPage() {
        setAnggotaId('')
        setSearchTerm('')
        setJumlah('')
-       setFile(null)
+       setFiles([])
        setSelectedTagihanId('donasi')
     }, 4000)
   }
@@ -278,18 +287,25 @@ export default function IuranPage() {
             <div>
               <div style={{ fontSize: '11px', fontWeight: 800, letterSpacing: '0.5px', textTransform: 'uppercase', color: '#9CA3AF', marginBottom: '8px' }}>Bukti Transfer</div>
               <label style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', width: '100%', minHeight: '140px', border: '2px dashed #E5E7EB', borderRadius: '20px', background: '#F9FAFB', cursor: 'pointer', transition: 'all 0.2s', position: 'relative', overflow: 'hidden' }}>
-                <input type="file" accept="image/*" style={{ display: 'none' }} onChange={e => setFile(e.target.files?.[0] ?? null)} />
-                {file ? (
-                  <div style={{ textAlign: 'center', padding: '20px' }}>
-                    <div style={{ fontSize: '28px', marginBottom: '8px' }}>📂</div>
-                    <div style={{ fontSize: '14px', fontWeight: 800, color: '#6366F1' }}>{file.name}</div>
-                    <div style={{ fontSize: '11px', color: '#9CA3AF', marginTop: '4px' }}>Klik untuk mengganti file</div>
+                <input type="file" accept="image/*" multiple style={{ display: 'none' }} onChange={e => setFiles(Array.from(e.target.files ?? []))} />
+                {files.length > 0 ? (
+                  <div style={{ textAlign: 'center', padding: '20px', width: '100%' }}>
+                    <div style={{ fontSize: '28px', marginBottom: '8px' }}>✓ {files.length} Foto</div>
+                    <div style={{ fontSize: '13px', color: '#6366F1', fontWeight: 700, marginBottom: '12px' }}>File dipilih</div>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', justifyContent: 'center' }}>
+                      {files.map((f, idx) => (
+                        <div key={idx} style={{ fontSize: '10px', color: '#9CA3AF', background: '#EEF2FF', padding: '6px 10px', borderRadius: '6px', maxWidth: '120px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          {f.name}
+                        </div>
+                      ))}
+                    </div>
+                    <div style={{ fontSize: '11px', color: '#9CA3AF', marginTop: '12px' }}>Klik untuk mengganti file</div>
                   </div>
                 ) : (
                   <div style={{ textAlign: 'center', padding: '20px' }}>
                     <div style={{ fontSize: '32px', marginBottom: '10px' }}>📸</div>
                     <div style={{ fontSize: '14px', fontWeight: 800, color: '#4B5563' }}>Upload Bukti Bayar</div>
-                    <div style={{ fontSize: '11px', color: '#9CA3AF', marginTop: '4px' }}>Lampirkan screenshot transfer kamu</div>
+                    <div style={{ fontSize: '11px', color: '#9CA3AF', marginTop: '4px' }}>Lampirkan screenshot transfer kamu (bisa lebih dari 1 foto)</div>
                   </div>
                 )}
               </label>
@@ -297,7 +313,7 @@ export default function IuranPage() {
 
             <button 
               onClick={handleSubmit} 
-              disabled={!anggotaId || !file || !jumlah || submitting} 
+              disabled={!anggotaId || files.length === 0 || !jumlah || submitting} 
               style={{ 
                 width: '100%', 
                 padding: '18px', 
@@ -310,7 +326,7 @@ export default function IuranPage() {
                 cursor: 'pointer', 
                 fontFamily: 'Nunito, sans-serif', 
                 boxShadow: '0 10px 20px -5px rgba(99, 102, 241, 0.4)', 
-                opacity: (!anggotaId || !file || !jumlah || submitting) ? 0.6 : 1, 
+                opacity: (!anggotaId || files.length === 0 || !jumlah || submitting) ? 0.6 : 1, 
                 transition: 'all 0.2s',
                 marginTop: '10px'
               }}

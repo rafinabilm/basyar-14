@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 
 interface ImageViewerProps {
   isOpen: boolean
@@ -14,6 +14,15 @@ export function ImageViewer({ isOpen, onClose, images, title, description }: Ima
   const [currentIndex, setCurrentIndex] = useState(0)
   const touchStartX = useRef(0)
   const touchEndX = useRef(0)
+
+  useEffect(() => {
+    if (isOpen && images.length > 0) {
+      document.body.style.overflow = 'hidden'
+      return () => {
+        document.body.style.overflow = 'unset'
+      }
+    }
+  }, [isOpen, images.length])
 
   if (!isOpen || images.length === 0) return null
 
@@ -58,6 +67,7 @@ export function ImageViewer({ isOpen, onClose, images, title, description }: Ima
 
   return (
     <div
+      ref={(el) => el?.focus()}
       onKeyDown={handleKeyDown}
       tabIndex={0}
       style={{
@@ -70,6 +80,7 @@ export function ImageViewer({ isOpen, onClose, images, title, description }: Ima
         justifyContent: 'center',
         padding: '20px',
         backdropFilter: 'blur(4px)',
+        outline: 'none',
       }}
       onClick={onClose}
     >
@@ -143,7 +154,9 @@ export function ImageViewer({ isOpen, onClose, images, title, description }: Ima
                 maxWidth: '100%',
                 maxHeight: '100%',
                 objectFit: 'contain',
-                zIndex: 1001
+                zIndex: 1001,
+                pointerEvents: 'none',
+                userSelect: 'none',
               }}
             />
           )}

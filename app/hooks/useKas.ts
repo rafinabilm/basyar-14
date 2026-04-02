@@ -10,7 +10,7 @@ export interface TransaksiKas {
   jumlah: number
   keterangan: string
   kategori: string
-  foto_bukti_url?: string
+  foto_bukti_urls: string[]
   dicatat_oleh?: string
   status?: 'active' | 'archived'
   created_at: string
@@ -54,11 +54,11 @@ export async function insertTransaksi(data: {
   jumlah: number
   keterangan: string
   kategori: string
-  foto_bukti_url?: string
+  foto_bukti_urls?: string[]
 }) {
   const { data: result, error } = await supabase
     .from('transaksi_kas')
-    .insert([data])
+    .insert([{ ...data, foto_bukti_urls: data.foto_bukti_urls || [] }])
     .select()
     .single()
 

@@ -37,7 +37,7 @@ export default function AdminKasPage() {
       kategori: t.kategori,
       tanggal: t.tanggal
     })
-    setExistingBukti(t.foto_bukti_url || null)
+    setExistingBukti(t.foto_bukti_urls && t.foto_bukti_urls.length > 0 ? t.foto_bukti_urls[0] : null)
     setShowForm(true)
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
@@ -57,15 +57,19 @@ export default function AdminKasPage() {
     if (!form.jumlah || !form.keterangan) return
     setSaving(true)
     
-    let foto_bukti_url = existingBukti
+    let foto_bukti_urls: string[] = existingBukti ? [existingBukti] : []
     
-    // Handle multiple file uploads (use first file for now, store only 1 in DB)
+    // Upload all selected files
     if (files.length > 0) {
-      const url = await uploadFile(files[0], 'basyar14/kas')
-      if (url) foto_bukti_url = url
+      const uploadedUrls: string[] = []
+      for (const file of files) {
+        const url = await uploadFile(file, 'basyar14/kas')
+        if (url) uploadedUrls.push(url)
+      }
+      foto_bukti_urls = uploadedUrls.length > 0 ? uploadedUrls : foto_bukti_urls
     }
 
-    const payload = { ...form, jumlah: parseInt(form.jumlah.replace(/\./g, '')), foto_bukti_url: foto_bukti_url || undefined } as any
+    const payload = { ...form, jumlah: parseInt(form.jumlah.replace(/\./g, '')), foto_bukti_urls } as any
     
     let res
     if (editingId) {
@@ -264,15 +268,15 @@ export default function AdminKasPage() {
                       <div style={{ fontSize: '14px', fontWeight: 700, color: '#111827' }}>{t.keterangan}</div>
                       <div style={{ fontSize: '12px', color: '#9CA3AF', marginTop: '2px' }}>{new Date(t.tanggal).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}</div>
                       <div style={{ display: 'flex', gap: '6px', alignItems: 'center', marginTop: '6px' }}>
-                        {t.foto_bukti_url && (
+                        {t.foto_bukti_urls && t.foto_bukti_urls.length > 0 && (
                           <button 
                             onClick={() => {
-                              setSelectedImages([t.foto_bukti_url!])
+                              setSelectedImages(t.foto_bukti_urls)
                               setSelectedTitle(t.keterangan)
                               setTimeout(() => setImageViewerOpen(true), 0)
                             }}
                             style={{ fontSize: '9px', fontWeight: 800, color: '#6366F1', background: '#EEF2FF', padding: '3px 8px', borderRadius: '20px', display: 'inline-block', border: 'none', cursor: 'pointer', textDecoration: 'none' }}>
-                            📄 Bukti
+                            📄 Bukti {t.foto_bukti_urls.length > 1 ? `(${t.foto_bukti_urls.length})` : ''}
                           </button>
                         )}
                         <button onClick={() => handleEdit(t)} style={{ fontSize: '9px', fontWeight: 800, color: '#4B5563', background: '#F3F4F6', padding: '3px 8px', borderRadius: '20px', border: 'none', cursor: 'pointer' }}>Edit</button>

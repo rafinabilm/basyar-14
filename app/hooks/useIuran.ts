@@ -19,7 +19,7 @@ export interface PembayaranIuran {
   tagihan_id: string
   jumlah_bayar: number
   status: 'menunggu' | 'lunas' | 'ditolak'
-  foto_bukti_url?: string
+  foto_bukti_urls: string[]
   created_at: string
   anggota?: { nama: string }
   tagihan?: { judul: string; nominal: number }
@@ -136,7 +136,7 @@ export async function submitPembayaran(data: {
   anggota_id: string
   tagihan_id: string
   jumlah_bayar: number
-  foto_bukti_url: string
+  foto_bukti_urls: string[]
 }) {
   const { error } = await supabase
     .from('pembayaran_iuran')
@@ -172,7 +172,7 @@ export async function verifikasiPembayaran(id: string) {
     jumlah: pemb.jumlah_bayar,
     keterangan: `Pembayaran ${judulTagihan} - ${namaAnggota}`,
     kategori: 'iuran',
-    foto_bukti_url: pemb.foto_bukti_url || null
+    foto_bukti_urls: pemb.foto_bukti_urls || []
   }])
 
   if (kasErr) return { error: kasErr }

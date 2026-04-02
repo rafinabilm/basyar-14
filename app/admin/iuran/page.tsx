@@ -394,10 +394,10 @@ export default function AdminIuranPage() {
                           >
                             {rejecting === p.id ? 'Loading...' : 'Tolak'}
                           </button>
-                          {p.foto_bukti_url && (
+                          {p.foto_bukti_urls && p.foto_bukti_urls.length > 0 && (
                              <button 
                               onClick={() => {
-                                setSelectedImages([p.foto_bukti_url!])
+                                setSelectedImages(p.foto_bukti_urls)
                                 setSelectedTitle(`${p.anggota?.nama || 'Pembayaran'} - Rp${p.jumlah_bayar.toLocaleString('id-ID')}`)
                                 setTimeout(() => setImageViewerOpen(true), 0)
                               }}
@@ -413,15 +413,15 @@ export default function AdminIuranPage() {
                                 textAlign: 'center'
                               }}
                             >
-                               Cek Bukti
+                               Cek Bukti {p.foto_bukti_urls.length > 1 ? `(${p.foto_bukti_urls.length})` : ''}
                              </button>
                           )}
                         </div>
                       ) : (
-                        p.foto_bukti_url && (
+                        p.foto_bukti_urls && p.foto_bukti_urls.length > 0 && (
                            <button 
                             onClick={() => {
-                              setSelectedImages([p.foto_bukti_url!])
+                              setSelectedImages(p.foto_bukti_urls)
                               setSelectedTitle(`${p.anggota?.nama || 'Pembayaran'} - Rp${p.jumlah_bayar.toLocaleString('id-ID')}`)
                               setTimeout(() => setImageViewerOpen(true), 0)
                             }}
@@ -436,7 +436,7 @@ export default function AdminIuranPage() {
                               cursor: 'pointer'
                             }}
                           >
-                            Lihat Bukti
+                            Lihat Bukti {p.foto_bukti_urls.length > 1 ? `(${p.foto_bukti_urls.length})` : ''}
                            </button>
                         )
                       )}

@@ -88,16 +88,16 @@ export default function KasPage() {
                     </div>
                     <div style={{ fontSize: '10px', color: '#9CA3AF', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.5px' }}>{t.status === 'archived' ? 'Arsip' : t.jenis}</div>
                     
-                    {t.foto_bukti_url && (
+                    {t.foto_bukti_urls && t.foto_bukti_urls.length > 0 && (
                       <button 
                         onClick={() => {
-                          setSelectedImages([t.foto_bukti_url!])
+                          setSelectedImages(t.foto_bukti_urls)
                           setSelectedTitle(t.keterangan)
                           setTimeout(() => setImageViewerOpen(true), 0)
                         }}
                         style={{ marginTop: '8px', padding: '4px 8px', borderRadius: '8px', background: '#F3F4F6', border: 'none', color: '#6366F1', fontSize: '10px', fontWeight: 800, cursor: 'pointer' }}
                       >
-                        Lihat Bukti
+                        Lihat Bukti {t.foto_bukti_urls.length > 1 ? `(${t.foto_bukti_urls.length})` : ''}
                       </button>
                     )}
                   </div>
