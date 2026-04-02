@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 
 interface ImageViewerProps {
   isOpen: boolean
@@ -13,14 +14,14 @@ interface ImageViewerProps {
 export function ImageViewer({ isOpen, onClose, images, title, description }: ImageViewerProps) {
   const [currentIndex, setCurrentIndex] = useState(0)
   const [imageError, setImageError] = useState(false)
+  const [mounted, setMounted] = useState(false)
   const touchStartX = useRef(0)
   const touchEndX = useRef(0)
 
+  // Ensure we're mounted on the client before using createPortal
   useEffect(() => {
-    if (isOpen) {
-      console.log('ImageViewer opened:', { isOpen, imagesCount: images.length, images, title, description })
-    }
-  }, [isOpen, images, title, description])
+    setMounted(true)
+  }, [])
 
   // Reset error state when images change
   useEffect(() => {
@@ -28,125 +29,97 @@ export function ImageViewer({ isOpen, onClose, images, title, description }: Ima
     setCurrentIndex(0)
   }, [images])
 
-  // Debug log for rendering phase
   useEffect(() => {
-    console.log('[ImageViewer] Render state changed:', {
-      isOpen,
-      imageError,
-      currentIndex,
-      currentImage: images[currentIndex],
-      totalImages: images.length,
-    })
-  }, [isOpen, imageError, currentIndex, images])
-
-  useEffect(() => {
-    if (isOpen && images.length > 0) {
-      // Save original overflow state
-      const originalOverflow = document.body.style.overflow
-      document.body.style.overflow = 'hidden'
-      
-      return () => {
-        // Restore original overflow state
-        document.body.style.overflow = originalOverflow || 'unset'
-      }
+    if (!isOpen || images.length === 0) return
+    const originalOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => {
+      document.body.style.overflow = originalOverflow || ''
     }
   }, [isOpen, images.length])
 
-  if (!isOpen || images.length === 0) return null
+  // Keyboard navigation
+  useEffect(() => {
+    if (!isOpen) return
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowLeft') handlePrev()
+      if (e.key === 'ArrowRight') handleNext()
+      if (e.key === 'Escape') onClose()
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [isOpen, currentIndex, images.length])
+
+  if (!isOpen || images.length === 0 || !mounted) return null
 
   const currentImage = images[currentIndex]
-  
-  if (!currentImage) {
-    console.error('ImageViewer: currentImage is undefined', { currentIndex, imagesLength: images.length, images })
-    return null
-  }
+  if (!currentImage) return null
 
-  // Validate URL format
-  if (!currentImage.startsWith('http://') && !currentImage.startsWith('https://')) {
-    console.warn('[ImageViewer] Invalid URL format:', currentImage)
-  }
-  
   const canGoPrev = currentIndex > 0
   const canGoNext = currentIndex < images.length - 1
 
-  const handlePrev = () => {
-    if (canGoPrev) setCurrentIndex(prev => prev - 1)
-  }
-
-  const handleNext = () => {
-    if (canGoNext) setCurrentIndex(prev => prev + 1)
-  }
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'ArrowLeft') handlePrev()
-    if (e.key === 'ArrowRight') handleNext()
-    if (e.key === 'Escape') onClose()
-  }
+  const handlePrev = () => { if (canGoPrev) setCurrentIndex(prev => prev - 1) }
+  const handleNext = () => { if (canGoNext) setCurrentIndex(prev => prev + 1) }
 
   const handleTouchStart = (e: React.TouchEvent) => {
     touchStartX.current = e.changedTouches[0].screenX
   }
-
   const handleTouchEnd = (e: React.TouchEvent) => {
     touchEndX.current = e.changedTouches[0].screenX
-    handleSwipe()
-  }
-
-  const handleSwipe = () => {
     const distance = touchStartX.current - touchEndX.current
-    const isLeftSwipe = distance > 50
-    const isRightSwipe = distance < -50
-
-    if (isLeftSwipe && canGoNext) {
-      handleNext()
-    } else if (isRightSwipe && canGoPrev) {
-      handlePrev()
-    }
+    if (distance > 50 && canGoNext) handleNext()
+    if (distance < -50 && canGoPrev) handlePrev()
   }
 
-  return (
+  const overlay = (
     <div
-      ref={(el) => el?.focus()}
-      onKeyDown={handleKeyDown}
-      tabIndex={0}
       style={{
         position: 'fixed',
         inset: 0,
-        background: 'rgba(0, 0, 0, 0.8)',
-        zIndex: 1000,
+        background: 'rgba(0, 0, 0, 0.85)',
+        zIndex: 999999,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
         padding: '20px',
-        backdropFilter: 'blur(4px)',
-        outline: 'none',
+        backdropFilter: 'blur(6px)',
+        WebkitBackdropFilter: 'blur(6px)',
+        animation: 'ivFadeIn 0.2s ease-out',
       }}
       onClick={onClose}
     >
       <div
         style={{
           background: 'white',
-          borderRadius: '16px',
+          borderRadius: '20px',
           overflow: 'hidden',
-          maxWidth: '90vw',
-          maxHeight: '90vh',
+          width: '100%',
+          maxWidth: '480px',
+          maxHeight: '90dvh',
           display: 'flex',
           flexDirection: 'column',
-          zIndex: 1001,
-          position: 'relative'
+          position: 'relative',
+          animation: 'ivSlideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
         }}
         onClick={e => e.stopPropagation()}
       >
         {/* Header */}
-        <div style={{ padding: '16px', borderBottom: '1px solid #F3F4F6', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <div style={{ flex: 1 }}>
+        <div style={{
+          padding: '16px 20px',
+          borderBottom: '1px solid #F3F4F6',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          flexShrink: 0,
+        }}>
+          <div style={{ flex: 1, minWidth: 0 }}>
             {title && (
-              <div style={{ fontSize: '16px', fontWeight: 800, color: '#111827', marginBottom: '4px' }}>
+              <div style={{ fontSize: '15px', fontWeight: 800, color: '#111827', marginBottom: '2px', fontFamily: 'Space Grotesk, sans-serif' }}>
                 {title}
               </div>
             )}
             {description && (
-              <div style={{ fontSize: '13px', color: '#6B7280' }}>
+              <div style={{ fontSize: '12px', color: '#6B7280', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                 {description}
               </div>
             )}
@@ -154,82 +127,70 @@ export function ImageViewer({ isOpen, onClose, images, title, description }: Ima
           <button
             onClick={onClose}
             style={{
-              background: 'none',
+              background: '#F3F4F6',
               border: 'none',
-              fontSize: '24px',
+              width: '32px',
+              height: '32px',
+              borderRadius: '50%',
               cursor: 'pointer',
-              color: '#9CA3AF',
-              padding: '0',
-              marginLeft: '16px',
+              color: '#6B7280',
+              fontSize: '18px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              marginLeft: '12px',
+              flexShrink: 0,
+              fontWeight: 800,
             }}
           >
             ✕
           </button>
         </div>
 
-        {/* Image Container */}
-        <div 
+        {/* Image area */}
+        <div
           onTouchStart={handleTouchStart}
           onTouchEnd={handleTouchEnd}
-          style={{ 
-            position: 'relative', 
-            flex: 1, 
-            display: 'flex', 
-            alignItems: 'center', 
-            justifyContent: 'center', 
-            background: '#F9FAFB', 
-            width: '100%',
-            overflow: 'auto',
-            userSelect: 'none',
-          }}>
-          {!imageError && currentImage && (
+          style={{
+            flex: 1,
+            minHeight: 0,
+            position: 'relative',
+            background: '#0f0f0f',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            overflow: 'hidden',
+          }}
+        >
+          {!imageError ? (
             <img
+              key={currentImage}
               src={currentImage}
-              alt={`Image ${currentIndex + 1}`}
+              alt={`Bukti ${currentIndex + 1}`}
               loading="eager"
-              onLoad={() => {
-                console.log('[ImageViewer] Image loaded:', {
-                  url: currentImage,
-                  index: currentIndex,
-                  total: images.length,
-                })
-                setImageError(false)
-              }}
-              onError={(e) => {
-                console.error('[ImageViewer] Image load error:', { 
-                  url: currentImage, 
-                  index: currentIndex, 
-                  total: images.length,
-                  error: e.type
-                })
-                setImageError(true)
-              }}
+              onError={() => setImageError(true)}
+              onLoad={() => setImageError(false)}
               style={{
                 maxWidth: '100%',
-                maxHeight: '100%',
+                maxHeight: '60dvh',
                 width: 'auto',
                 height: 'auto',
+                objectFit: 'contain',
+                display: 'block',
+                animation: 'ivImgFade 0.2s ease-out',
               }}
             />
-          )}
-          {imageError && (
-            <div style={{ color: '#EF4444', textAlign: 'center', padding: '20px' }}>
-              <p>❌ Gambar gagal dimuat</p>
-              <p style={{ fontSize: '12px', color: '#6B7280', marginTop: '8px' }}>
-                {currentImage}
-              </p>
-            </div>
-          )}
-          {imageError && (
-            <div style={{ color: '#EF4444', fontSize: '14px', textAlign: 'center', padding: '20px' }}>
-              <div>❌ Gagal memuat gambar</div>
-              <div style={{ fontSize: '12px', color: '#9CA3AF', marginTop: '8px', maxWidth: '200px', wordBreak: 'break-all' }}>
+          ) : (
+            <div style={{ color: '#EF4444', textAlign: 'center', padding: '40px 20px' }}>
+              <div style={{ fontSize: '32px', marginBottom: '8px' }}>⚠️</div>
+              <div style={{ fontSize: '14px', fontWeight: 700 }}>Gagal memuat gambar</div>
+              <div style={{ fontSize: '11px', color: '#9CA3AF', marginTop: '6px', wordBreak: 'break-all', maxWidth: '240px' }}>
                 {currentImage}
               </div>
             </div>
           )}
 
-          {/* Navigation Arrows */}
+          {/* Prev/Next arrows */}
           {images.length > 1 && (
             <>
               <button
@@ -238,82 +199,86 @@ export function ImageViewer({ isOpen, onClose, images, title, description }: Ima
                 style={{
                   position: 'absolute',
                   left: '12px',
-                  background: 'rgba(255, 255, 255, 0.9)',
-                  border: 'none',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
                   width: '40px',
                   height: '40px',
                   borderRadius: '50%',
+                  background: canGoPrev ? 'rgba(255,255,255,0.9)' : 'rgba(255,255,255,0.2)',
+                  border: 'none',
                   cursor: canGoPrev ? 'pointer' : 'not-allowed',
-                  opacity: canGoPrev ? 1 : 0.3,
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  fontSize: '18px',
-                  fontWeight: 800,
-                  color: '#6366F1',
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
+                  transition: 'all 0.2s',
+                  zIndex: 2,
                 }}
               >
-                ◀
+                <svg viewBox="0 0 24 24" fill="none" stroke={canGoPrev ? '#6366F1' : '#9CA3AF'} style={{ width: '18px', height: '18px' }} strokeWidth={2.5} strokeLinecap="round"><path d="M15 18l-6-6 6-6" /></svg>
               </button>
-
               <button
                 onClick={handleNext}
                 disabled={!canGoNext}
                 style={{
                   position: 'absolute',
                   right: '12px',
-                  background: 'rgba(255, 255, 255, 0.9)',
-                  border: 'none',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
                   width: '40px',
                   height: '40px',
                   borderRadius: '50%',
+                  background: canGoNext ? 'rgba(255,255,255,0.9)' : 'rgba(255,255,255,0.2)',
+                  border: 'none',
                   cursor: canGoNext ? 'pointer' : 'not-allowed',
-                  opacity: canGoNext ? 1 : 0.3,
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  fontSize: '18px',
-                  fontWeight: 800,
-                  color: '#6366F1',
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
+                  transition: 'all 0.2s',
+                  zIndex: 2,
                 }}
               >
-                ▶
+                <svg viewBox="0 0 24 24" fill="none" stroke={canGoNext ? '#6366F1' : '#9CA3AF'} style={{ width: '18px', height: '18px' }} strokeWidth={2.5} strokeLinecap="round"><path d="M9 18l6-6-6-6" /></svg>
               </button>
             </>
           )}
         </div>
 
-        {/* Footer - Image Counter & Thumbnails */}
+        {/* Footer: counter + thumbnails */}
         {images.length > 1 && (
-          <div style={{ padding: '16px', borderTop: '1px solid #F3F4F6', background: '#F9FAFB' }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px', flexWrap: 'wrap' }}>
-              <div style={{ fontSize: '12px', fontWeight: 800, color: '#6B7280', minWidth: '60px', textAlign: 'center' }}>
+          <div style={{
+            padding: '14px 16px',
+            borderTop: '1px solid #F3F4F6',
+            background: '#F9FAFB',
+            flexShrink: 0,
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', flexWrap: 'wrap' }}>
+              <div style={{ fontSize: '11px', fontWeight: 800, color: '#6B7280' }}>
                 {currentIndex + 1} / {images.length}
               </div>
               <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', justifyContent: 'center' }}>
                 {images.map((img, idx) => (
                   <button
                     key={idx}
-                    onClick={() => setCurrentIndex(idx)}
+                    onClick={() => { setCurrentIndex(idx); setImageError(false) }}
                     style={{
-                      width: '40px',
-                      height: '40px',
-                      borderRadius: '8px',
-                      border: idx === currentIndex ? '2px solid #6366F1' : '1px solid #D1D5DB',
+                      width: '44px',
+                      height: '44px',
+                      borderRadius: '10px',
+                      border: idx === currentIndex ? '2.5px solid #6366F1' : '2px solid #E5E7EB',
                       background: 'white',
                       cursor: 'pointer',
                       overflow: 'hidden',
                       padding: 0,
+                      flexShrink: 0,
+                      transition: 'border-color 0.2s',
                     }}
                   >
                     <img
                       src={img}
                       alt={`Thumbnail ${idx + 1}`}
-                      style={{
-                        width: '100%',
-                        height: '100%',
-                        objectFit: 'cover',
-                      }}
+                      style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
                     />
                   </button>
                 ))}
@@ -322,6 +287,14 @@ export function ImageViewer({ isOpen, onClose, images, title, description }: Ima
           </div>
         )}
       </div>
+
+      <style>{`
+        @keyframes ivFadeIn { from { opacity: 0 } to { opacity: 1 } }
+        @keyframes ivSlideUp { from { opacity: 0; transform: translateY(16px) scale(0.97) } to { opacity: 1; transform: translateY(0) scale(1) } }
+        @keyframes ivImgFade { from { opacity: 0 } to { opacity: 1 } }
+      `}</style>
     </div>
   )
+
+  return createPortal(overlay, document.body)
 }
