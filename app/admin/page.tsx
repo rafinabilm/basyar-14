@@ -22,7 +22,7 @@ function fmtKas(n: number): string {
 
 const QUICK_ACTIONS = [
   { label: 'Tambah Transaksi', href: '/admin/kas', icon: '+' },
-  { label: 'Lihat Arsip', href: '/admin/kas#archive', icon: '📦' },
+  { label: 'Lihat Arsip', href: '/admin/arsip', icon: '📦' },
   { label: 'Verifikasi Iuran', href: '/admin/iuran', icon: '✓' },
   { label: 'Upload Foto', href: '/admin/galeri', icon: '📸' },
   { label: 'Buat Event', href: '/admin/event', icon: '📅' },
