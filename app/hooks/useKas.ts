@@ -23,12 +23,22 @@ export function useKas() {
   
   // Normalize data to handle both old (foto_bukti_url) and new (foto_bukti_urls) formats
   const normalizeTransaksi = (data: any[]): TransaksiKas[] => {
-    return data.map(t => ({
-      ...t,
-      foto_bukti_urls: Array.isArray(t.foto_bukti_urls) 
-        ? t.foto_bukti_urls 
-        : (t.foto_bukti_url ? [t.foto_bukti_url] : [])
-    }))
+    return data.map(t => {
+      const normalized = {
+        ...t,
+        foto_bukti_urls: Array.isArray(t.foto_bukti_urls) 
+          ? t.foto_bukti_urls 
+          : (t.foto_bukti_url ? [t.foto_bukti_url] : [])
+      }
+      if (normalized.foto_bukti_urls.length > 0) {
+        console.log('useKas normalize:', { 
+          keterangan: t.keterangan, 
+          original: t.foto_bukti_url || t.foto_bukti_urls,
+          normalized: normalized.foto_bukti_urls
+        })
+      }
+      return normalized
+    })
   }
   
   const fetchTransaksi = useCallback(async (isInitial = false) => {

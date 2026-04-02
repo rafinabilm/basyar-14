@@ -117,12 +117,23 @@ export function useAllPembayaran() {
 
   // Normalize data to handle both old (foto_bukti_url) and new (foto_bukti_urls) formats
   const normalizePembayaran = (data: any[]): PembayaranIuran[] => {
-    return data.map(p => ({
-      ...p,
-      foto_bukti_urls: Array.isArray(p.foto_bukti_urls) 
-        ? p.foto_bukti_urls 
-        : (p.foto_bukti_url ? [p.foto_bukti_url] : [])
-    }))
+    return data.map(p => {
+      const normalized = {
+        ...p,
+        foto_bukti_urls: Array.isArray(p.foto_bukti_urls) 
+          ? p.foto_bukti_urls 
+          : (p.foto_bukti_url ? [p.foto_bukti_url] : [])
+      }
+      if (normalized.foto_bukti_urls.length > 0) {
+        console.log('useIuran normalize:', { 
+          anggota: p.anggota?.nama,
+          jumlah: p.jumlah_bayar,
+          original: p.foto_bukti_url || p.foto_bukti_urls,
+          normalized: normalized.foto_bukti_urls
+        })
+      }
+      return normalized
+    })
   }
 
   const fetch = useCallback(async (isInitial = false) => {

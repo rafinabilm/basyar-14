@@ -12,14 +12,31 @@ interface ImageViewerProps {
 
 export function ImageViewer({ isOpen, onClose, images, title, description }: ImageViewerProps) {
   const [currentIndex, setCurrentIndex] = useState(0)
+  const [imageError, setImageError] = useState(false)
   const touchStartX = useRef(0)
   const touchEndX = useRef(0)
 
   useEffect(() => {
+    if (isOpen) {
+      console.log('ImageViewer opened:', { isOpen, imagesCount: images.length, images, title, description })
+    }
+  }, [isOpen, images, title, description])
+
+  // Reset error state when images change
+  useEffect(() => {
+    setImageError(false)
+    setCurrentIndex(0)
+  }, [images])
+
+  useEffect(() => {
     if (isOpen && images.length > 0) {
+      // Save original overflow state
+      const originalOverflow = document.body.style.overflow
       document.body.style.overflow = 'hidden'
+      
       return () => {
-        document.body.style.overflow = 'unset'
+        // Restore original overflow state
+        document.body.style.overflow = originalOverflow || 'unset'
       }
     }
   }, [isOpen, images.length])
@@ -27,6 +44,12 @@ export function ImageViewer({ isOpen, onClose, images, title, description }: Ima
   if (!isOpen || images.length === 0) return null
 
   const currentImage = images[currentIndex]
+  
+  if (!currentImage) {
+    console.error('ImageViewer: currentImage is undefined', { currentIndex, imagesLength: images.length, images })
+    return null
+  }
+  
   const canGoPrev = currentIndex > 0
   const canGoNext = currentIndex < images.length - 1
 
@@ -145,11 +168,15 @@ export function ImageViewer({ isOpen, onClose, images, title, description }: Ima
             width: '100%',
             zIndex: 1001
           }}>
-          {currentImage && (
+          {!imageError && currentImage && (
             <img
               src={currentImage}
               alt={`Image ${currentIndex + 1}`}
-              onError={(e) => console.error('Image load error:', currentImage, e)}
+              onLoad={() => setImageError(false)}
+              onError={(e) => {
+                console.error('Image load error:', { currentImage, currentIndex, error: e })
+                setImageError(true)
+              }}
               style={{
                 maxWidth: '100%',
                 maxHeight: '100%',
@@ -160,8 +187,13 @@ export function ImageViewer({ isOpen, onClose, images, title, description }: Ima
               }}
             />
           )}
-          {!currentImage && (
-            <div style={{ color: '#9CA3AF', fontSize: '14px' }}>Gagal memuat gambar</div>
+          {imageError && (
+            <div style={{ color: '#EF4444', fontSize: '14px', textAlign: 'center', padding: '20px' }}>
+              <div>❌ Gagal memuat gambar</div>
+              <div style={{ fontSize: '12px', color: '#9CA3AF', marginTop: '8px', maxWidth: '200px', wordBreak: 'break-all' }}>
+                {currentImage}
+              </div>
+            </div>
           )}
 
           {/* Navigation Arrows */}
