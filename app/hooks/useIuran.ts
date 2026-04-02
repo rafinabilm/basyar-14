@@ -115,13 +115,23 @@ export function useAllPembayaran() {
   const [pembayaran, setPembayaran] = useState<PembayaranIuran[]>([])
   const [loading, setLoading] = useState(true)
 
+  // Normalize data to handle both old (foto_bukti_url) and new (foto_bukti_urls) formats
+  const normalizePembayaran = (data: any[]): PembayaranIuran[] => {
+    return data.map(p => ({
+      ...p,
+      foto_bukti_urls: Array.isArray(p.foto_bukti_urls) 
+        ? p.foto_bukti_urls 
+        : (p.foto_bukti_url ? [p.foto_bukti_url] : [])
+    }))
+  }
+
   const fetch = useCallback(async (isInitial = false) => {
     if (!isInitial) setLoading(true)
     const { data } = await supabase
       .from('pembayaran_iuran')
       .select('*, anggota(nama), tagihan(judul, nominal)')
       .order('created_at', { ascending: false })
-    setPembayaran(data || [])
+    setPembayaran(normalizePembayaran(data || []))
     setLoading(false)
   }, [])
 

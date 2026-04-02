@@ -20,6 +20,17 @@ export function useKas() {
   const [transaksi, setTransaksi] = useState<TransaksiKas[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  
+  // Normalize data to handle both old (foto_bukti_url) and new (foto_bukti_urls) formats
+  const normalizeTransaksi = (data: any[]): TransaksiKas[] => {
+    return data.map(t => ({
+      ...t,
+      foto_bukti_urls: Array.isArray(t.foto_bukti_urls) 
+        ? t.foto_bukti_urls 
+        : (t.foto_bukti_url ? [t.foto_bukti_url] : [])
+    }))
+  }
+  
   const fetchTransaksi = useCallback(async (isInitial = false) => {
     if (!isInitial) setLoading(true)
     const { data, error } = await supabase
@@ -31,7 +42,7 @@ export function useKas() {
     else {
       // Filter out archived in JS to be safe against missing column in DB
       const filtered = (data || []).filter((t: any) => t.status !== 'archived')
-      setTransaksi(filtered)
+      setTransaksi(normalizeTransaksi(filtered))
     }
     setLoading(false)
   }, [])
