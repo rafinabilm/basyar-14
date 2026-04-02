@@ -182,11 +182,14 @@ export function ImageViewer({ isOpen, onClose, images, title, description }: Ima
             minHeight: '200px',
             overflow: 'auto',
             userSelect: 'none',
+            gap: '8px',
+            padding: '16px',
           }}>
           {!imageError && currentImage && (
             <img
               src={currentImage}
               alt={`Image ${currentIndex + 1}`}
+              loading="eager"
               onLoad={() => {
                 console.log('[ImageViewer] Image loaded:', {
                   url: currentImage,
@@ -205,8 +208,8 @@ export function ImageViewer({ isOpen, onClose, images, title, description }: Ima
                 setImageError(true)
               }}
               style={{
-                maxWidth: '100%',
-                maxHeight: '100%',
+                maxWidth: 'calc(90vw - 40px - 32px)',
+                maxHeight: 'calc(90vh - 100px - 32px)',
                 width: 'auto',
                 height: 'auto',
                 objectFit: 'contain',
