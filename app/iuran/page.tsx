@@ -6,6 +6,7 @@ import { PageHeader } from '@/app/components/ui/PageHeader'
 import { useTagihan, useAnggota, submitPembayaran } from '@/app/hooks/useIuran'
 import { uploadFile } from '@/app/hooks/useUpload'
 import { useDialog } from '@/app/providers/DialogProvider'
+import { supabase } from '@/app/lib/supabase'
 
 function fmt(n: number) {
   return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(n)
@@ -25,6 +26,22 @@ export default function IuranPage() {
   const [file, setFile] = useState<File | null>(null)
   const [submitting, setSubmitting] = useState(false)
   const [submitted, setSubmitted] = useState(false)
+  const [rekening, setRekening] = useState<{bank_name?: string, account_number?: string, account_name?: string} | null>(null)
+  const [copied, setCopied] = useState(false)
+
+  useEffect(() => {
+    supabase.from('settings').select('value').eq('key', 'rekening_tujuan').single().then(({ data }) => {
+      if (data && data.value) setRekening(data.value)
+    })
+  }, [])
+
+  const handleCopy = () => {
+    if (rekening?.account_number) {
+      navigator.clipboard.writeText(rekening.account_number)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    }
+  }
 
   // Filtered members based on searchTerm
   const filteredAnggota = searchTerm.trim() === '' 
@@ -226,6 +243,36 @@ export default function IuranPage() {
                 />
               </div>
             </div>
+
+            {/* Tampilan Rekening Tujuan */}
+            {rekening && rekening.bank_name && (
+              <div style={{ background: '#EEF2FF', border: '1px solid #E0E7FF', borderRadius: '20px', padding: '16px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <div style={{ fontSize: '11px', fontWeight: 800, letterSpacing: '0.5px', textTransform: 'uppercase', color: '#6366F1' }}>Transfer Ke Sini</div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column' }}>
+                    <span style={{ fontSize: '14px', fontWeight: 800, color: '#111827' }}>{rekening.bank_name}</span>
+                    <span style={{ fontSize: '18px', fontWeight: 900, color: '#4F46E5', fontFamily: 'Space Grotesk, monospace', letterSpacing: '1px', marginTop: '2px' }}>{rekening.account_number}</span>
+                    <span style={{ fontSize: '12px', fontWeight: 600, color: '#6B7280', marginTop: '2px' }}>a.n {rekening.account_name}</span>
+                  </div>
+                  <button 
+                    onClick={handleCopy}
+                    style={{ background: copied ? '#10B981' : '#6366F1', color: 'white', border: 'none', padding: '8px 16px', borderRadius: '12px', fontSize: '12px', fontWeight: 800, cursor: 'pointer', transition: 'all 0.2s', display: 'flex', alignItems: 'center', gap: '6px' }}
+                  >
+                    {copied ? (
+                      <>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" style={{ width: '14px', height: '14px' }} strokeWidth={3}><polyline points="20 6 9 17 4 12" /></svg>
+                        Tersalin
+                      </>
+                    ) : (
+                      <>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" style={{ width: '14px', height: '14px' }} strokeWidth={2.5}><rect x="9" y="9" width="13" height="13" rx="2" ry="2" /><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" /></svg>
+                        Salin Rekening
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
+            )}
 
             {/* Field: Bukti Transfer */}
             <div>

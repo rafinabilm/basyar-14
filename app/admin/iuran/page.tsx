@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { PageHeader } from '@/app/components/ui/PageHeader'
 import { Card } from '@/app/components/ui/Card'
 import { Pill } from '@/app/components/ui/Pill'
@@ -32,6 +32,37 @@ export default function AdminIuranPage() {
   const [editId, setEditId] = useState<string | null>(null)
 
   const menunggu = pembayaran.filter(p => p.status === 'menunggu')
+
+  const [rekening, setRekening] = useState({ bank_name: '', account_number: '', account_name: '' })
+  const [savingRekening, setSavingRekening] = useState(false)
+  const [showRekeningForm, setShowRekeningForm] = useState(false)
+
+  useEffect(() => {
+    supabase.from('settings').select('value').eq('key', 'rekening_tujuan').single().then(({ data }) => {
+      if (data && data.value) {
+        setRekening(data.value)
+      }
+    })
+  }, [])
+
+  async function handleSaveRekening() {
+    if (!rekening.bank_name || !rekening.account_number || !rekening.account_name) {
+      showAlert('Mohon isi semua field rekening yang dibutuhkan.')
+      return
+    }
+    setSavingRekening(true)
+    const { error } = await supabase.from('settings').upsert({
+      key: 'rekening_tujuan',
+      value: rekening
+    })
+    setSavingRekening(false)
+    if (error) {
+      showAlert('Gagal menyimpan: ' + error.message)
+    } else {
+      showAlert('Pengaturan rekening pembayaran berhasil disimpan!')
+      setShowRekeningForm(false)
+    }
+  }
 
   async function handleVerifikasi(id: string) {
     setVerifying(id)
@@ -136,6 +167,50 @@ export default function AdminIuranPage() {
       </div>
 
       <div style={{ padding: '0 20px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+        {/* Settings Rekening Pembayaran */}
+        <div className="animate-in" style={{ background: '#FFFFFF', borderRadius: '24px', padding: '20px', border: '1px solid #EEF2FF', boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.05)' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div>
+              <div style={{ fontSize: '15px', fontWeight: 800, color: '#111827' }}>Tujuan Pembayaran User</div>
+              <div style={{ fontSize: '12px', color: '#6B7280', marginTop: '2px' }}>
+                {rekening.bank_name ? `${rekening.bank_name} - ${rekening.account_number} (a.n ${rekening.account_name})` : 'Belum dikonfigurasi'}
+              </div>
+            </div>
+            <button 
+              onClick={() => setShowRekeningForm(!showRekeningForm)} 
+              style={{ padding: '8px 16px', borderRadius: '12px', background: showRekeningForm ? '#F3F4F6' : '#EEF2FF', color: showRekeningForm ? '#6B7280' : '#4F46E5', fontWeight: 800, fontSize: '12px', border: 'none', cursor: 'pointer', flexShrink: 0 }}
+            >
+              {showRekeningForm ? 'Batal' : 'Ubah Info'}
+            </button>
+          </div>
+          
+          {showRekeningForm && (
+            <div style={{ marginTop: '20px', paddingTop: '20px', borderTop: '1px solid #F3F4F6', display: 'flex', flexDirection: 'column', gap: '14px' }}>
+              <div>
+                <div style={{ fontSize: '11px', fontWeight: 800, color: '#9CA3AF', textTransform: 'uppercase', marginBottom: '6px' }}>Penyedia Layanan / Bank</div>
+                <input type="text" placeholder="Cth: Bank Mandiri / DANA / BCA" value={rekening.bank_name} onChange={(e) => setRekening(p => ({ ...p, bank_name: e.target.value }))} style={{ width: '100%', padding: '12px', borderRadius: '12px', border: '1px solid #E5E7EB', outline: 'none', fontFamily: 'Nunito, sans-serif' }} />
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                 <div>
+                   <div style={{ fontSize: '11px', fontWeight: 800, color: '#9CA3AF', textTransform: 'uppercase', marginBottom: '6px' }}>Nomor Rekening / HP</div>
+                   <input type="text" placeholder="Cth: 12345678" value={rekening.account_number} onChange={(e) => setRekening(p => ({ ...p, account_number: e.target.value }))} style={{ width: '100%', padding: '12px', borderRadius: '12px', border: '1px solid #E5E7EB', outline: 'none', fontFamily: 'Nunito, sans-serif' }} />
+                 </div>
+                 <div>
+                   <div style={{ fontSize: '11px', fontWeight: 800, color: '#9CA3AF', textTransform: 'uppercase', marginBottom: '6px' }}>Atas Nama</div>
+                   <input type="text" placeholder="Cth: Budi Santoso" value={rekening.account_name} onChange={(e) => setRekening(p => ({ ...p, account_name: e.target.value }))} style={{ width: '100%', padding: '12px', borderRadius: '12px', border: '1px solid #E5E7EB', outline: 'none', fontFamily: 'Nunito, sans-serif' }} />
+                 </div>
+              </div>
+              <button 
+                onClick={handleSaveRekening} 
+                disabled={savingRekening || !rekening.bank_name || !rekening.account_number || !rekening.account_name} 
+                style={{ marginTop: '8px', padding: '14px', borderRadius: '14px', background: '#6366F1', color: 'white', fontWeight: 800, border: 'none', cursor: 'pointer', fontFamily: 'Nunito, sans-serif', opacity: savingRekening ? 0.6 : 1 }}
+              >
+                {savingRekening ? 'Menyimpan...' : 'Simpan Pengaturan'}
+              </button>
+            </div>
+          )}
+        </div>
+
         {/* Navigation Tabs */}
         <div className="animate-in" style={{ display: 'flex', gap: '12px', background: '#F9FAFB', padding: '6px', borderRadius: '16px' }}>
           <button 
