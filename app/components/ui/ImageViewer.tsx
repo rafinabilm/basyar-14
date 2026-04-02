@@ -28,6 +28,17 @@ export function ImageViewer({ isOpen, onClose, images, title, description }: Ima
     setCurrentIndex(0)
   }, [images])
 
+  // Debug log for rendering phase
+  useEffect(() => {
+    console.log('[ImageViewer] Render state changed:', {
+      isOpen,
+      imageError,
+      currentIndex,
+      currentImage: images[currentIndex],
+      totalImages: images.length,
+    })
+  }, [isOpen, imageError, currentIndex, images])
+
   useEffect(() => {
     if (isOpen && images.length > 0) {
       // Save original overflow state
@@ -48,6 +59,11 @@ export function ImageViewer({ isOpen, onClose, images, title, description }: Ima
   if (!currentImage) {
     console.error('ImageViewer: currentImage is undefined', { currentIndex, imagesLength: images.length, images })
     return null
+  }
+
+  // Validate URL format
+  if (!currentImage.startsWith('http://') && !currentImage.startsWith('https://')) {
+    console.warn('[ImageViewer] Invalid URL format:', currentImage)
   }
   
   const canGoPrev = currentIndex > 0
@@ -164,7 +180,6 @@ export function ImageViewer({ isOpen, onClose, images, title, description }: Ima
             background: '#F9FAFB', 
             width: '100%',
             minHeight: '200px',
-            maxHeight: '70vh',
             overflow: 'auto',
             userSelect: 'none',
           }}>
@@ -173,21 +188,40 @@ export function ImageViewer({ isOpen, onClose, images, title, description }: Ima
               src={currentImage}
               alt={`Image ${currentIndex + 1}`}
               onLoad={() => {
-                console.log('Image loaded successfully:', currentImage)
+                console.log('[ImageViewer] Image loaded:', {
+                  url: currentImage,
+                  index: currentIndex,
+                  total: images.length,
+                })
                 setImageError(false)
               }}
               onError={(e) => {
-                console.error('Image load error:', { currentImage, currentIndex, error: e })
+                console.error('[ImageViewer] Image load error:', { 
+                  url: currentImage, 
+                  index: currentIndex, 
+                  total: images.length,
+                  error: e.type
+                })
                 setImageError(true)
               }}
               style={{
-                width: '100%',
+                maxWidth: '100%',
+                maxHeight: '100%',
+                width: 'auto',
                 height: 'auto',
                 objectFit: 'contain',
                 pointerEvents: 'none',
                 userSelect: 'none',
               }}
             />
+          )}
+          {imageError && (
+            <div style={{ color: '#EF4444', textAlign: 'center', padding: '20px' }}>
+              <p>❌ Gambar gagal dimuat</p>
+              <p style={{ fontSize: '12px', color: '#6B7280', marginTop: '8px' }}>
+                {currentImage}
+              </p>
+            </div>
           )}
           {imageError && (
             <div style={{ color: '#EF4444', fontSize: '14px', textAlign: 'center', padding: '20px' }}>
