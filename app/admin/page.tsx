@@ -4,6 +4,8 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { supabase } from '@/app/lib/supabase'
 import { Card } from '@/app/components/ui/Card'
+import { TransactionFormModal } from '@/app/components/admin/TransactionFormModal'
+import { useDialog } from '@/app/providers/DialogProvider'
 
 interface DashboardStats {
   totalAnggota: number
@@ -21,14 +23,15 @@ function fmtKas(n: number): string {
 }
 
 const QUICK_ACTIONS = [
-  { label: 'Tambah Transaksi', href: '/admin/kas', icon: '+' },
   { label: 'Lihat Arsip', href: '/admin/arsip', icon: '📦' },
   { label: 'Verifikasi Iuran', href: '/admin/iuran', icon: '✓' },
   { label: 'Upload Foto', href: '/admin/galeri', icon: '📸' },
   { label: 'Buat Event', href: '/admin/event', icon: '📅' },
+  { label: 'Lihat Transaksi', href: '/admin/kas', icon: '📊' },
 ]
 
 export default function AdminDashboardPage() {
+  const { showAlert } = useDialog()
   const [stats, setStats] = useState<DashboardStats>({
     totalAnggota: 0,
     saldoKas: 0,
@@ -38,38 +41,41 @@ export default function AdminDashboardPage() {
     pendingVerifikasi: 0,
   })
   const [loading, setLoading] = useState(true)
+  const [showTransactionForm, setShowTransactionForm] = useState(false)
+
+  const loadStats = async () => {
+    setLoading(true)
+    const [
+      { count: anggotaCount },
+      { data: kasData },
+      { count: lunasCount },
+      { count: totalAnggotaForIuran },
+      { data: events },
+      { count: pendingCount },
+    ] = await Promise.all([
+      supabase.from('anggota').select('id', { count: 'exact' }),
+      supabase.from('transaksi_kas').select('jenis, jumlah'),
+      supabase.from('pembayaran_iuran').select('id', { count: 'exact' }).eq('status', 'lunas'),
+      supabase.from('anggota').select('id', { count: 'exact' }),
+      supabase.from('event').select('tanggal').gte('tanggal', new Date().toISOString().split('T')[0]),
+      supabase.from('pembayaran_iuran').select('id', { count: 'exact' }).eq('status', 'menunggu'),
+    ])
+
+    const saldo = (kasData || []).reduce((acc: number, t: any) =>
+      t.jenis === 'pemasukan' ? acc + t.jumlah : acc - t.jumlah, 0)
+
+    setStats({
+      totalAnggota: anggotaCount || 0,
+      saldoKas: saldo,
+      lunasiuran: lunasCount || 0,
+      totalTagihanAktif: totalAnggotaForIuran || 0,
+      eventAktif: (events || []).length,
+      pendingVerifikasi: pendingCount || 0,
+    })
+    setLoading(false)
+  }
 
   useEffect(() => {
-    async function loadStats() {
-      const [
-        { count: anggotaCount },
-        { data: kasData },
-        { count: lunasCount },
-        { count: totalAnggotaForIuran },
-        { data: events },
-        { count: pendingCount },
-      ] = await Promise.all([
-        supabase.from('anggota').select('id', { count: 'exact' }),
-        supabase.from('transaksi_kas').select('jenis, jumlah'),
-        supabase.from('pembayaran_iuran').select('id', { count: 'exact' }).eq('status', 'lunas'),
-        supabase.from('anggota').select('id', { count: 'exact' }),
-        supabase.from('event').select('tanggal').gte('tanggal', new Date().toISOString().split('T')[0]),
-        supabase.from('pembayaran_iuran').select('id', { count: 'exact' }).eq('status', 'menunggu'),
-      ])
-
-      const saldo = (kasData || []).reduce((acc: number, t: any) =>
-        t.jenis === 'pemasukan' ? acc + t.jumlah : acc - t.jumlah, 0)
-
-      setStats({
-        totalAnggota: anggotaCount || 0,
-        saldoKas: saldo,
-        lunasiuran: lunasCount || 0,
-        totalTagihanAktif: totalAnggotaForIuran || 0,
-        eventAktif: (events || []).length,
-        pendingVerifikasi: pendingCount || 0,
-      })
-      setLoading(false)
-    }
     loadStats()
   }, [])
 
@@ -152,9 +158,40 @@ export default function AdminDashboardPage() {
             <div style={{ width: '40px', height: '1px', background: '#F3F4F6' }} />
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+            {/* Tambah Transaksi - Opens Modal */}
+            <button
+              onClick={() => setShowTransactionForm(true)}
+              style={{
+                textDecoration: 'none',
+                padding: '14px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '12px',
+                background: 'white',
+                border: '1px solid #F3F4F6',
+                borderRadius: '14px',
+                cursor: 'pointer',
+                transition: 'all 0.2s',
+                animation: 'slideIn 0.3s ease-out',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = '#F9FAFB'
+                e.currentTarget.style.borderColor = '#E5E7EB'
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'white'
+                e.currentTarget.style.borderColor = '#F3F4F6'
+              }}
+            >
+              <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: '#EEF2FF', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '16px', flexShrink: 0 }}>
+                +
+              </div>
+              <span style={{ fontSize: '13px', fontWeight: 800, color: '#111827' }}>Tambah Transaksi</span>
+            </button>
+
             {QUICK_ACTIONS.map((a, i) => (
               <Link key={a.href} href={a.href} style={{ textDecoration: 'none' }} className="animate-in">
-                <Card style={{ animationDelay: `${(i + 4) * 0.05}s`, padding: '14px', display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <Card style={{ animationDelay: `${(i + 1) * 0.05}s`, padding: '14px', display: 'flex', alignItems: 'center', gap: '12px' }}>
                   <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: '#EEF2FF', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '16px', flexShrink: 0 }}>
                     {a.icon}
                   </div>
@@ -164,6 +201,31 @@ export default function AdminDashboardPage() {
             ))}
           </div>
         </div>
+
+        {/* Transaction Form Modal */}
+        <TransactionFormModal
+          isOpen={showTransactionForm}
+          onClose={() => setShowTransactionForm(false)}
+          onSuccess={() => {
+            setShowTransactionForm(false)
+            setLoading(true)
+            loadStats()
+          }}
+          showAlert={showAlert}
+        />
+
+        <style>{`
+          @keyframes slideIn {
+            from {
+              opacity: 0;
+              transform: translateY(10px);
+            }
+            to {
+              opacity: 1;
+              transform: translateY(0);
+            }
+          }
+        `}</style>
       </div>
     </main>
   )
