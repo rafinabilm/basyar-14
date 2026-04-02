@@ -5,6 +5,7 @@ import './globals.css'
 import { DialogProvider } from './providers/DialogProvider'
 import { PageTransitionWrapper } from './components/ui/PageTransitionWrapper'
 import { LayoutNavManager } from './components/ui/LayoutNavManager'
+import { PWABanner } from './components/ui/PWABanner'
 import { Analytics } from '@vercel/analytics/next'
 import { SpeedInsights } from '@vercel/speed-insights/next'
 
@@ -31,6 +32,11 @@ export const metadata: Metadata = {
     follow: false,
   },
   manifest: '/manifest.json',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'default',
+    title: 'Basyar-14',
+  },
 }
 
 export const viewport: Viewport = {
@@ -51,6 +57,7 @@ export default function RootLayout({
       <body>
         <div className="mobile-container">
           <DialogProvider>
+            <PWABanner />
             <PageTransitionWrapper>
               {children}
             </PageTransitionWrapper>
