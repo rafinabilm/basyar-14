@@ -179,11 +179,8 @@ export function ImageViewer({ isOpen, onClose, images, title, description }: Ima
             justifyContent: 'center', 
             background: '#F9FAFB', 
             width: '100%',
-            minHeight: '200px',
             overflow: 'auto',
             userSelect: 'none',
-            gap: '8px',
-            padding: '16px',
           }}>
           {!imageError && currentImage && (
             <img
@@ -208,13 +205,10 @@ export function ImageViewer({ isOpen, onClose, images, title, description }: Ima
                 setImageError(true)
               }}
               style={{
-                maxWidth: 'calc(90vw - 40px - 32px)',
-                maxHeight: 'calc(90vh - 100px - 32px)',
+                maxWidth: '100%',
+                maxHeight: '100%',
                 width: 'auto',
                 height: 'auto',
-                objectFit: 'contain',
-                pointerEvents: 'none',
-                userSelect: 'none',
               }}
             />
           )}
