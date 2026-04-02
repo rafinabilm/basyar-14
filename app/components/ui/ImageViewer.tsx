@@ -162,26 +162,28 @@ export function ImageViewer({ isOpen, onClose, images, title, description }: Ima
             alignItems: 'center', 
             justifyContent: 'center', 
             background: '#F9FAFB', 
-            overflow: 'hidden',
-            minHeight: '300px', 
-            userSelect: 'none', 
             width: '100%',
-            zIndex: 1001
+            minHeight: '200px',
+            maxHeight: '70vh',
+            overflow: 'auto',
+            userSelect: 'none',
           }}>
           {!imageError && currentImage && (
             <img
               src={currentImage}
               alt={`Image ${currentIndex + 1}`}
-              onLoad={() => setImageError(false)}
+              onLoad={() => {
+                console.log('Image loaded successfully:', currentImage)
+                setImageError(false)
+              }}
               onError={(e) => {
                 console.error('Image load error:', { currentImage, currentIndex, error: e })
                 setImageError(true)
               }}
               style={{
-                maxWidth: '100%',
-                maxHeight: '100%',
+                width: '100%',
+                height: 'auto',
                 objectFit: 'contain',
-                zIndex: 1001,
                 pointerEvents: 'none',
                 userSelect: 'none',
               }}
