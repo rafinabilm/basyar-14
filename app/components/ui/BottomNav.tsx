@@ -1,49 +1,27 @@
 'use client'
 
-import { usePathname, useRouter } from 'next/navigation'
-import { useCallback, useTransition } from 'react'
+import { usePathname } from 'next/navigation'
+import Link from 'next/link'
 
 const navItems = [
+  // ... (Definisi icon biarkan sama persis seperti kode lo sebelumnya, tidak perlu diubah)
   {
     href: '/',
     label: 'Home',
+    prefetch: true, // [MARK: Default aktif]
     icon: (active: boolean) => (
-      <svg
-        viewBox="0 0 24 24"
-        fill={active ? 'currentColor' : 'none'}
-        stroke="currentColor"
-        style={{ width: '22px', height: '22px' }}
-        strokeWidth={active ? 0 : 1.8}
-      >
-        <path
-          d="M3 9.5L12 3l9 6.5V20a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V9.5z"
-          fill={active ? 'currentColor' : 'none'}
-          stroke="currentColor"
-          strokeWidth={active ? 0 : 1.8}
-        />
-        <path
-          d="M9 21V12h6v9"
-          stroke={active ? 'rgba(255,255,255,0.5)' : 'currentColor'}
-          strokeWidth={1.8}
-          strokeLinecap="round"
-          fill="none"
-        />
+      <svg viewBox="0 0 24 24" fill={active ? 'currentColor' : 'none'} stroke="currentColor" style={{ width: '22px', height: '22px' }} strokeWidth={active ? 0 : 1.8}>
+        <path d="M3 9.5L12 3l9 6.5V20a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V9.5z" fill={active ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth={active ? 0 : 1.8} />
+        <path d="M9 21V12h6v9" stroke={active ? 'rgba(255,255,255,0.5)' : 'currentColor'} strokeWidth={1.8} strokeLinecap="round" fill="none" />
       </svg>
     ),
   },
   {
     href: '/kas',
     label: 'Kas',
+    prefetch: true, // [MARK: Default aktif]
     icon: (active: boolean) => (
-      <svg
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        style={{ width: '22px', height: '22px' }}
-        strokeWidth={1.8}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      >
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" style={{ width: '22px', height: '22px' }} strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
         <rect x="2" y="5" width="20" height="14" rx="3" fill={active ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth={active ? 0 : 1.8} />
         <line x1="2" y1="10" x2="22" y2="10" stroke={active ? 'rgba(255,255,255,0.5)' : 'currentColor'} strokeWidth={1.8} />
         <line x1="6" y1="15" x2="9" y2="15" stroke={active ? 'rgba(255,255,255,0.5)' : 'currentColor'} strokeWidth={1.8} strokeLinecap="round" />
@@ -53,48 +31,23 @@ const navItems = [
   {
     href: '/iuran',
     label: 'Iuran',
+    prefetch: true, // [MARK: Default aktif]
     icon: (active: boolean) => (
-      <svg
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        style={{ width: '22px', height: '22px' }}
-        strokeWidth={1.8}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      >
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" style={{ width: '22px', height: '22px' }} strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
         <circle cx="12" cy="12" r="9" fill={active ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth={active ? 0 : 1.8} />
-        <path
-          d="M12 7v1.5m0 7V17m2.5-7.5a2.5 2.5 0 0 0-5 0c0 1.5 1 2 2.5 2.5S15 13.5 15 15a2.5 2.5 0 0 1-5 0"
-          stroke={active ? 'rgba(255,255,255,0.65)' : 'currentColor'}
-          strokeWidth={1.6}
-          fill="none"
-          strokeLinecap="round"
-        />
+        <path d="M12 7v1.5m0 7V17m2.5-7.5a2.5 2.5 0 0 0-5 0c0 1.5 1 2 2.5 2.5S15 13.5 15 15a2.5 2.5 0 0 1-5 0" stroke={active ? 'rgba(255,255,255,0.65)' : 'currentColor'} strokeWidth={1.6} fill="none" strokeLinecap="round" />
       </svg>
     ),
   },
   {
     href: '/galeri',
     label: 'Galeri',
+    prefetch: false, // [MARK: PREFETCH DIMATIKAN UNTUK GALERI KARENA BERAT GAMBAR]
     icon: (active: boolean) => (
-      <svg
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        style={{ width: '22px', height: '22px' }}
-        strokeWidth={1.8}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      >
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" style={{ width: '22px', height: '22px' }} strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
         <rect x="3" y="3" width="18" height="18" rx="3" fill={active ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth={active ? 0 : 1.8} />
         <circle cx="8.5" cy="8.5" r="1.5" fill={active ? 'rgba(255,255,255,0.6)' : 'currentColor'} stroke="none" />
-        <path
-          d="M21 15l-5-5L5 21"
-          stroke={active ? 'rgba(255,255,255,0.65)' : 'currentColor'}
-          strokeWidth={1.8}
-          fill="none"
-        />
+        <path d="M21 15l-5-5L5 21" stroke={active ? 'rgba(255,255,255,0.65)' : 'currentColor'} strokeWidth={1.8} fill="none" />
       </svg>
     ),
   },
@@ -102,23 +55,16 @@ const navItems = [
 
 export function BottomNav() {
   const pathname = usePathname()
-  const router = useRouter()
-  const [isPending, startTransition] = useTransition()
 
   // Match the exact route or potential sub-route
   const activeIndex = navItems.findIndex(item => (
     item.href === '/' ? pathname === '/' : pathname.startsWith(item.href)
   ))
 
-  const handleNav = useCallback((href: string) => {
-    startTransition(() => {
-      router.push(href)
-    })
-  }, [router])
-
   return (
     <>
       <style>{`
+        /* ... CSS biarkan persis sama seperti sebelumnya ... */
         .apple-nav {
           position: fixed;
           bottom: calc(20px + env(safe-area-inset-bottom, 0px));
@@ -203,28 +149,27 @@ export function BottomNav() {
         .apple-nav-item.active .apple-nav-label {
           font-weight: 700;
         }
-
-        .apple-nav-pill.pending {
-          opacity: 0.7;
-        }
       `}</style>
 
       <nav className="apple-nav" aria-label="Navigasi utama">
-        <div className={`apple-nav-pill${isPending ? ' pending' : ''}`}>
-          <div 
+        {/* Hapus class pending */}
+        <div className="apple-nav-pill">
+          <div
             className="active-slider"
-            style={{ 
-              transform: `translateX(calc(${activeIndex >= 0 ? activeIndex : 0} * 100%))` 
+            style={{
+              transform: `translateX(calc(${activeIndex >= 0 ? activeIndex : 0} * 100%))`
             }}
           />
           {navItems.map((item, idx) => {
             const isActive = idx === activeIndex
             return (
-              <button
+              // [MARK: Ganti <button> jadi <Link> dari next/link]
+              <Link
                 key={item.href}
+                href={item.href}
+                prefetch={item.prefetch}
                 className={`apple-nav-item${isActive ? ' active' : ''}`}
                 style={{ color: isActive ? '#6366F1' : '#94a3b8' }}
-                onClick={() => handleNav(item.href)}
                 aria-current={isActive ? 'page' : undefined}
               >
                 <div className="apple-nav-icon">
@@ -233,7 +178,7 @@ export function BottomNav() {
                 <span className="apple-nav-label">
                   {item.label}
                 </span>
-              </button>
+              </Link>
             )
           })}
         </div>
