@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { Card } from '@/app/components/ui/Card'
 import { insertTransaksi, updateTransaksi, TransaksiKas } from '@/app/hooks/useKas'
 import { uploadFile } from '@/app/hooks/useUpload'
@@ -23,6 +24,7 @@ export function TransactionFormModal({
   const [saving, setSaving] = useState(false)
   const [files, setFiles] = useState<File[]>([])
   const [existingBukti, setExistingBukti] = useState<string | null>(null)
+  const router = useRouter()
 
   const initialForm = {
     jenis: 'pengeluaran' as const,
@@ -83,6 +85,9 @@ export function TransactionFormModal({
       showAlert('Gagal: ' + res.error.message)
       return
     }
+
+    // Refresh the route so server components show updated data
+    try { router.refresh() } catch (e) { /* no-op */ }
 
     onSuccess()
     handleClose()

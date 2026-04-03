@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { PageHeader } from '@/app/components/ui/PageHeader'
 import { Card } from '@/app/components/ui/Card'
@@ -16,6 +17,7 @@ function fmt(n: number) {
 export default function AdminKasPage() {
   const { transaksi, saldo, totalMasuk, totalKeluar, loading, refetch } = useKas()
   const { showAlert, showConfirm } = useDialog()
+  const router = useRouter()
   const [imageViewerOpen, setImageViewerOpen] = useState(false)
   const [selectedImages, setSelectedImages] = useState<string[]>([])
   const [selectedTitle, setSelectedTitle] = useState('')
@@ -28,6 +30,7 @@ export default function AdminKasPage() {
     else {
       showAlert('Transaksi berhasil diarsipkan')
       refetch()
+      try { router.refresh() } catch (e) { /* no-op */ }
     }
   }
 

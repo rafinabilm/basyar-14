@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { Card } from '@/app/components/ui/Card'
 import { PageHeader } from '@/app/components/ui/PageHeader'
 import { useTagihan, useAnggota, submitPembayaran } from '@/app/hooks/useIuran'
@@ -16,6 +17,7 @@ export default function IuranPage() {
   const { tagihan, loading } = useTagihan()
   const { anggota } = useAnggota()
   const { showAlert } = useDialog()
+  const router = useRouter()
   
   // Form States
   const [selectedTagihanId, setSelectedTagihanId] = useState<string>('donasi')
@@ -100,6 +102,9 @@ export default function IuranPage() {
       jumlah_bayar: parseInt(rawJumlah),
       foto_bukti_urls: uploadedUrls,
     })
+
+    // Refresh current route to ensure server components fetch fresh data
+    if (!error) router.refresh()
 
     setSubmitting(false)
     if (error) { showAlert('Gagal mengirim data: ' + error.message); return }

@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { useDialog } from '@/app/providers/DialogProvider'
 import { restoreTransaksi, deletePermanently, getArchivedKas } from '@/app/hooks/useKas'
 import { Card } from '@/app/components/ui/Card'
@@ -25,6 +26,7 @@ export default function ArsipPage() {
   const [loading, setLoading] = useState(true)
   const [restoring, setRestoring] = useState<string | null>(null)
   const [deleting, setDeleting] = useState<string | null>(null)
+  const router = useRouter()
 
   useEffect(() => {
     fetchArchived()
@@ -57,6 +59,7 @@ export default function ArsipPage() {
     } else {
       showAlert('Transaksi berhasil dikembalikan')
       fetchArchived()
+      try { router.refresh() } catch (e) { /* no-op */ }
     }
   }
 
@@ -77,6 +80,7 @@ export default function ArsipPage() {
     } else {
       showAlert('Transaksi berhasil dihapus permanen')
       fetchArchived()
+      try { router.refresh() } catch (e) { /* no-op */ }
     }
   }
 

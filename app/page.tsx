@@ -4,7 +4,8 @@ import { Card } from '@/app/components/ui/Card'
 import Link from 'next/link'
 import { supabase } from '@/app/lib/supabase'
 
-export const revalidate = 60
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
 
 function fmt(n: number) {
   return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(Math.abs(n))
