@@ -1,5 +1,3 @@
-'use client' // Ubah ke Client Component jika butuh interaktivitas, atau tetap Server Component jika data tidak berubah sering.
-
 import { SaldoCard } from '@/app/components/ui/SaldoCard'
 import { StatCard } from '@/app/components/ui/StatCard'
 import { Card } from '@/app/components/ui/Card'
