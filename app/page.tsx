@@ -1,12 +1,14 @@
-'use client'
+"use client"
 
-import { useMemo } from 'react'
+import { useMemo, useState, useEffect } from 'react'
 import { SaldoCard } from '@/app/components/ui/SaldoCard'
 import { StatCard } from '@/app/components/ui/StatCard'
 import { Card } from '@/app/components/ui/Card'
 import Link from 'next/link'
 import { useKas } from '@/app/hooks/useKas'
 import { useEvents } from '@/app/hooks/useGaleri'
+import { useAnggota } from '@/app/hooks/useIuran'
+import { supabase } from '@/app/lib/supabase'
 
 function fmt(n: number) {
   return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(Math.abs(n))
@@ -26,8 +28,26 @@ export default function HomePage() {
   const { transaksi, saldo, totalMasuk, totalKeluar, loading } = useKas()
   const { events: latestEvents = [], loading: eventsLoading } = useEvents()
 
-  const totalFoto = 0 // kept for layout parity; galeri count not critical here
-  const totalAnggota = 0
+  const { anggota } = useAnggota()
+  const [totalFoto, setTotalFoto] = useState(0)
+  const totalAnggota = (anggota || []).length
+
+  useEffect(() => {
+    let mounted = true
+    // lightweight count query for total gallery photos
+    async function fetchCount() {
+      try {
+        const { count } = await supabase.from('galeri_foto').select('id', { count: 'exact', head: true }) as any
+        if (!mounted) return
+        setTotalFoto(count || 0)
+      } catch (err) {
+        if (!mounted) return
+        setTotalFoto(0)
+      }
+    }
+    fetchCount()
+    return () => { mounted = false }
+  }, [])
 
   const PLACEHOLDER_COLORS = ['#6366F1', '#4F46E5', '#818CF8']
 
