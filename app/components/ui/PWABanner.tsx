@@ -61,9 +61,10 @@ export function PWABanner() {
     
     if (isIOS) {
       showAlert({
-        title: 'Install di iPhone',
-        message: 'Tap ikon "Share" (⍐) di bagian tengah bawah browser Safari, kemudian gulir panel dan pilih "Add to Home Screen" (Tambah ke Layar Utama).',
-        confirmText: 'Mengerti'
+        title: 'Install di iPhone / iPad 🍏',
+        // Pakai \n untuk bikin baris baru supaya instruksinya step-by-step
+        message: 'Cara install aplikasi Basyar-14:\n\n1. Buka web ini via browser Safari (Wajib).\n2. Tap ikon Share (kotak panah atas ⍐) di baris bawah layar.\n3. Geser layar ke bawah.\n4. Pilih "Add to Home Screen" (Tambah ke Layar Utama) ➕.',
+        confirmText: 'Oke, Mengerti!'
       })
       return
     }
