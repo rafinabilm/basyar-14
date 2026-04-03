@@ -17,8 +17,21 @@ export default function KasPage() {
   const [imageViewerOpen, setImageViewerOpen] = useState(false)
   const [selectedImages, setSelectedImages] = useState<string[]>([])
   const [selectedTitle, setSelectedTitle] = useState('')
+  
+  // TAMBAHAN: Limit jumlah item yang di-render pertama kali
+  const [visibleCount, setVisibleCount] = useState(10) 
+
+  // Reset visible count kalau filter diganti
+  const handleFilterChange = (newFilter: 'semua' | 'pemasukan' | 'pengeluaran') => {
+    setFilter(newFilter)
+    setVisibleCount(10)
+  }
 
   const filtered = transaksi.filter(t => filter === 'semua' ? true : t.jenis === filter)
+  
+  // Ambil hanya sekian item sesuai visibleCount
+  const visibleTransactions = filtered.slice(0, visibleCount)
+
   const saldo = transaksi.reduce((acc, t) => t.jenis === 'pemasukan' ? acc + t.jumlah : acc - t.jumlah, 0)
   const totalMasuk = transaksi.filter(t => t.jenis === 'pemasukan').reduce((acc, t) => acc + t.jumlah, 0)
   const totalKeluar = transaksi.filter(t => t.jenis === 'pengeluaran').reduce((acc, t) => acc + t.jumlah, 0)
@@ -38,7 +51,7 @@ export default function KasPage() {
            {(['semua', 'pemasukan', 'pengeluaran'] as const).map((f) => (
              <button 
                key={f}
-               onClick={() => setFilter(f)}
+               onClick={() => handleFilterChange(f)}
                style={{ 
                  padding: '8px 20px', 
                  borderRadius: '14px', 
@@ -68,7 +81,7 @@ export default function KasPage() {
           />
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            {filtered.map((t) => (
+            {visibleTransactions.map((t) => (
               <Card key={t.id} style={{ padding: '16px', border: '1px solid #F3F4F6' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <div style={{ display: 'flex', gap: '14px', alignItems: 'center' }}>
@@ -88,7 +101,8 @@ export default function KasPage() {
                     </div>
                     <div style={{ fontSize: '10px', color: '#9CA3AF', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.5px' }}>{t.status === 'archived' ? 'Arsip' : t.jenis}</div>
                     
-                    {t.foto_bukti_urls && t.foto_bukti_urls.length > 0 && (
+                    {/* PERBAIKAN: Cek index 0 tidak kosong dan tidak null */}
+                    {t.foto_bukti_urls && t.foto_bukti_urls.length > 0 && t.foto_bukti_urls[0] && t.foto_bukti_urls[0] !== "" && (
                       <button 
                         onClick={() => {
                           setSelectedImages(t.foto_bukti_urls)
@@ -104,6 +118,26 @@ export default function KasPage() {
                 </div>
               </Card>
             ))}
+            
+            {/* TAMBAHAN: Tombol Load More */}
+            {visibleCount < filtered.length && (
+              <button 
+                onClick={() => setVisibleCount(prev => prev + 10)}
+                style={{
+                  marginTop: '12px',
+                  padding: '12px',
+                  borderRadius: '12px',
+                  background: '#F9FAFB',
+                  color: '#4B5563',
+                  border: '1px solid #E5E7EB',
+                  fontWeight: 700,
+                  fontSize: '14px',
+                  cursor: 'pointer'
+                }}
+              >
+                Tampilkan Lebih Banyak
+              </button>
+            )}
           </div>
         )}
       </div>

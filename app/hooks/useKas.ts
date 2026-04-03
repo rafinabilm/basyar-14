@@ -21,21 +21,18 @@ export function useKas() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   
-  // Normalize data to handle both old (foto_bukti_url) and new (foto_bukti_urls) formats
+  // State untuk Saldo, Masuk, Keluar (Biar gak re-calculate terus)
+  const [saldo, setSaldo] = useState(0)
+  const [totalMasuk, setTotalMasuk] = useState(0)
+  const [totalKeluar, setTotalKeluar] = useState(0)
+  
   const normalizeTransaksi = (data: any[]): TransaksiKas[] => {
     return data.map(t => {
       const normalized = {
         ...t,
         foto_bukti_urls: Array.isArray(t.foto_bukti_urls) 
           ? t.foto_bukti_urls 
-          : (t.foto_bukti_url ? [t.foto_bukti_url] : [])
-      }
-      if (normalized.foto_bukti_urls.length > 0) {
-        console.log('useKas normalize:', { 
-          keterangan: t.keterangan, 
-          original: t.foto_bukti_url || t.foto_bukti_urls,
-          normalized: normalized.foto_bukti_urls
-        })
+          : (t.foto_bukti_urls ? [t.foto_bukti_urls] : []) // asumsikan nama kolom sudah fix foto_bukti_urls
       }
       return normalized
     })
@@ -43,16 +40,31 @@ export function useKas() {
   
   const fetchTransaksi = useCallback(async (isInitial = false) => {
     if (!isInitial) setLoading(true)
+    
+    // PERBAIKAN: Filter langsung dari database (jangan select archived)
     const { data, error } = await supabase
       .from('transaksi_kas')
       .select('*')
+      .neq('status', 'archived') // <--- Filter di DB lebih cepat
       .order('tanggal', { ascending: false })
+      // .limit(100) <-- Buka komen ini kalau nanti data udah bener-bener ribuan dan butuh dibatasi
 
-    if (error) setError(error.message)
-    else {
-      // Filter out archived in JS to be safe against missing column in DB
-      const filtered = (data || []).filter((t: any) => t.status !== 'archived')
-      setTransaksi(normalizeTransaksi(filtered))
+    if (error) {
+      setError(error.message)
+    } else {
+      const normalizedData = normalizeTransaksi(data || [])
+      setTransaksi(normalizedData)
+      
+      // PERBAIKAN: Hitung saldo sekali saja saat fetch selesai
+      let masuk = 0
+      let keluar = 0
+      normalizedData.forEach(t => {
+        if (t.jenis === 'pemasukan') masuk += t.jumlah
+        else keluar += t.jumlah
+      })
+      setTotalMasuk(masuk)
+      setTotalKeluar(keluar)
+      setSaldo(masuk - keluar)
     }
     setLoading(false)
   }, [])
@@ -61,13 +73,10 @@ export function useKas() {
     fetchTransaksi(true)
   }, [fetchTransaksi])
 
-  const saldo = transaksi.reduce((acc, t) =>
-    t.jenis === 'pemasukan' ? acc + t.jumlah : acc - t.jumlah, 0)
-  const totalMasuk = transaksi.filter(t => t.jenis === 'pemasukan').reduce((acc, t) => acc + t.jumlah, 0)
-  const totalKeluar = transaksi.filter(t => t.jenis === 'pengeluaran').reduce((acc, t) => acc + t.jumlah, 0)
-
   return { transaksi, saldo, totalMasuk, totalKeluar, loading, error, refetch: fetchTransaksi }
 }
+
+// ... Fungsi insert, update, archive, dsb biarkan sama seperti sebelumnya ...
 
 export async function insertTransaksi(data: {
   tanggal: string
