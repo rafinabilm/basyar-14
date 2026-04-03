@@ -6,29 +6,24 @@ import { useDialog } from '@/app/providers/DialogProvider'
 
 export function PWABanner() {
   const pathname = usePathname()
-  const [isStandalone, setIsStandalone] = useState(true) // default true to avoid flash on standalone
+  const [isStandalone, setIsStandalone] = useState(true)
   const [isIOS, setIsIOS] = useState(false)
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null)
   const [isDismissed, setIsDismissed] = useState(true)
   const [mounted, setMounted] = useState(false)
   const { showConfirm, showAlert } = useDialog()
 
-  // Hide PWA banner on admin routes
   const isAdminRoute = pathname.startsWith('/admin')
 
   useEffect(() => {
     setMounted(true)
     
-    // Check if standalone
     const standalone = window.matchMedia('(display-mode: standalone)').matches
-    
-    // iOS detection
     const ios = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream
     
     setIsStandalone(standalone)
     setIsIOS(ios)
 
-    // Check dismissal state (1 day expiration)
     const dismissedAt = localStorage.getItem('pwaDismissedAt')
     if (dismissedAt) {
       const dismissedTime = new Date(dismissedAt).getTime()
@@ -43,7 +38,6 @@ export function PWABanner() {
       setIsDismissed(false)
     }
 
-    // Android/Chrome install prompt event
     const handleBeforeInstallPrompt = (e: any) => {
       e.preventDefault()
       setDeferredPrompt(e)
@@ -54,16 +48,16 @@ export function PWABanner() {
   }, [])
 
   if (!mounted || isStandalone || isDismissed || isAdminRoute) return null
-  if (!isIOS && !deferredPrompt) return null // Only show on iOS or if Android prompt is ready
+  if (!isIOS && !deferredPrompt) return null
 
   const handleInstallClick = async (e?: React.MouseEvent) => {
     if (e) e.stopPropagation()
     
     if (isIOS) {
+      // [MARK: Updated iOS Safari specific instruction flow]
       showAlert({
         title: 'Install di iPhone / iPad 🍏',
-        // Pakai \n untuk bikin baris baru supaya instruksinya step-by-step
-        message: 'Cara install aplikasi Basyar-14:\n\n1. Buka web ini via browser Safari (Wajib).\n2. Tap ikon Share (kotak panah atas ⍐) di baris bawah layar.\n3. Geser layar ke bawah.\n4. Pilih "Add to Home Screen" (Tambah ke Layar Utama) ➕.',
+        message: 'Cara install Basyar-14:\n\n1. Buka web ini via Safari (Wajib).\n2. Tap menu (...) di pojok kanan bawah.\n3. Pilih "Share".\n4. Scroll / klik panah "View More".\n5. Pilih "Add to Home Screen" ➕.',
         confirmText: 'Oke, Mengerti!'
       })
       return
