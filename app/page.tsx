@@ -1,9 +1,13 @@
+import { Suspense } from 'react'
 import { SaldoCard } from '@/app/components/ui/SaldoCard'
 import { StatCard } from '@/app/components/ui/StatCard'
 import { Card } from '@/app/components/ui/Card'
 import Link from 'next/link'
 import { supabase } from '@/app/lib/supabase'
 
+export const revalidate = 60
+
+// Utils
 function fmt(n: number) {
   return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(Math.abs(n))
 }
@@ -14,21 +18,39 @@ function fmtShort(n: number) {
   return `Rp ${n}`
 }
 
-export const revalidate = 60
+export default function HomePage() {
+  return (
+    <main style={{ paddingBottom: '120px' }}>
+      <div style={{ padding: '32px 20px 24px' }}>
+        <div>
+          <h1 style={{ fontSize: '30px', fontWeight: 900, color: '#111827', letterSpacing: '-1.5px', lineHeight: 1, fontFamily: 'Space Grotesk, sans-serif' }}>Basyar-14</h1>
+          <p style={{ fontSize: '14px', color: '#6B7280', marginTop: '6px', fontWeight: 600, letterSpacing: '-0.2px' }}>Angkatan 14 PP Al-Hamid</p>
+        </div>
+      </div>
 
-export default async function HomePage() {
+      <div style={{ padding: '0 20px', display: 'flex', flexDirection: 'column', gap: '24px' }}>
+        <Suspense fallback={<DashboardSkeleton />}>
+          <DashboardContent />
+        </Suspense>
+      </div>
+    </main>
+  )
+}
+
+// Async component for data fetching
+async function DashboardContent() {
   const now = new Date()
   const currentPeriod = now.toLocaleDateString('id-ID', { month: 'long', year: 'numeric' })
-  const monthPrefix = now.toISOString().substring(0, 7) // format "YYYY-MM"
+  const monthPrefix = now.toISOString().substring(0, 7)
 
-  // OPTIMASI: Tarik data hanya yang diperlukan & filter di DB
+  // Fetch optimization: Limit rows and filter active status at DB level
   const [transaksiRes, fotoCountRes, anggotaRes, latestEventsRes] = await Promise.all([
     supabase
       .from('transaksi_kas')
       .select('id, jenis, jumlah, keterangan, tanggal, status')
-      .neq('status', 'archived') // Filter di DB, bukan di JS!
+      .neq('status', 'archived')
       .order('tanggal', { ascending: false })
-      .limit(200), // Batasi tarikan data untuk performa Home
+      .limit(200),
     supabase.from('galeri_foto').select('id', { count: 'exact', head: true }),
     supabase.from('anggota').select('id', { count: 'exact' }),
     supabase.from('event')
@@ -42,7 +64,7 @@ export default async function HomePage() {
   const totalAnggota = anggotaRes.count || 0
   const latestEvents = latestEventsRes.data || []
 
-  // Logic saldo (Sekarang lebih ringan karena data sudah difilter DB)
+  // Aggregation logic
   const saldo = transaksi.reduce((acc: number, t: any) => t.jenis === 'pemasukan' ? acc + t.jumlah : acc - t.jumlah, 0)
   const totalMasuk = transaksi.filter((t: any) => t.jenis === 'pemasukan').reduce((acc: number, t: any) => acc + t.jumlah, 0)
   const totalKeluar = transaksi.filter((t: any) => t.jenis === 'pengeluaran').reduce((acc: number, t: any) => acc + t.jumlah, 0)
@@ -54,74 +76,78 @@ export default async function HomePage() {
   const PLACEHOLDER_COLORS = ['#6366F1', '#4F46E5', '#818CF8']
 
   return (
-    <main style={{ paddingBottom: '120px' }}>
-      <div style={{ padding: '32px 20px 24px' }}>
-        <div>
-          <h1 style={{ fontSize: '30px', fontWeight: 900, color: '#111827', letterSpacing: '-1.5px', lineHeight: 1, fontFamily: 'Space Grotesk, sans-serif' }}>Basyar-14</h1>
-          <p style={{ fontSize: '14px', color: '#6B7280', marginTop: '6px', fontWeight: 600, letterSpacing: '-0.2px' }}>Angkatan 14 PP Al-Hamid</p>
-        </div>
+    <>
+      <SaldoCard saldo={saldo} masuk={totalMasuk} keluar={totalKeluar} monthlyIncome={monthMasuk} period={currentPeriod} />
+
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+        <StatCard label="Total Anggota" value={totalAnggota} icon={<UserIcon />} />
+        <StatCard label="Total Galeri" value={totalFoto} icon={<GalleryIcon />} iconBg="#F5F3FF" />
+        <StatCard label="Pemasukan Total" value={fmtShort(totalMasuk)} icon={<IncomeIcon />} iconBg="#ECFDF5" />
+        <StatCard label="Pengeluaran Total" value={fmtShort(totalKeluar)} icon={<OutcomeIcon />} iconBg="#FFF1F2" />
       </div>
 
-      <div style={{ padding: '0 20px', display: 'flex', flexDirection: 'column', gap: '24px' }}>
-        <SaldoCard saldo={saldo} masuk={totalMasuk} keluar={totalKeluar} monthlyIncome={monthMasuk} period={currentPeriod} />
-
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-          <StatCard label="Total Anggota" value={totalAnggota} icon={<UserIcon />} />
-          <StatCard label="Total Galeri" value={totalFoto} icon={<GalleryIcon />} iconBg="#F5F3FF" />
-          <StatCard label="Pemasukan Total" value={fmtShort(totalMasuk)} icon={<IncomeIcon />} iconBg="#ECFDF5" />
-          <StatCard label="Pengeluaran Total" value={fmtShort(totalKeluar)} icon={<OutcomeIcon />} iconBg="#FFF1F2" />
+      <div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+          <h2 style={{ fontSize: '18px', fontWeight: 800, color: '#111827' }}>Riwayat Kas</h2>
+          <Link href="/kas" style={{ fontSize: '13px', fontWeight: 700, color: '#6366F1', textDecoration: 'none' }}>Lihat Semua</Link>
         </div>
+        <Card style={{ padding: '8px 16px', border: '1px solid #F3F4F6' }}>
+          {recentTransaksi.length === 0 ? (
+            <p style={{ fontSize: '13px', color: '#9CA3AF', textAlign: 'center', padding: '24px 0' }}>Belum ada transaksi</p>
+          ) : (
+            recentTransaksi.map((t: any, i: number) => (
+              <TransactionRow key={t.id} t={t} isLast={i === recentTransaksi.length - 1} />
+            ))
+          )}
+        </Card>
+      </div>
 
-        {/* Riwayat Kas */}
-        <div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-            <h2 style={{ fontSize: '18px', fontWeight: 800, color: '#111827' }}>Riwayat Kas</h2>
-            <Link href="/kas" style={{ fontSize: '13px', fontWeight: 700, color: '#6366F1', textDecoration: 'none' }}>Lihat Semua</Link>
-          </div>
-          <Card style={{ padding: '8px 16px', border: '1px solid #F3F4F6' }}>
-            {recentTransaksi.length === 0 ? (
-              <p style={{ fontSize: '13px', color: '#9CA3AF', textAlign: 'center', padding: '24px 0' }}>Belum ada transaksi</p>
-            ) : (
-              recentTransaksi.map((t: any, i: number) => (
-                <TransactionRow key={t.id} t={t} isLast={i === recentTransaksi.length - 1} />
-              ))
-            )}
-          </Card>
+      <div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+          <h2 style={{ fontSize: '18px', fontWeight: 800, color: '#111827' }}>Momen Terkini</h2>
+          <Link href="/galeri" style={{ fontSize: '13px', fontWeight: 700, color: '#6366F1', textDecoration: 'none' }}>Lihat Galeri</Link>
         </div>
-
-        {/* Gallery Grid */}
-        <div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-            <h2 style={{ fontSize: '18px', fontWeight: 800, color: '#111827' }}>Momen Terkini</h2>
-            <Link href="/galeri" style={{ fontSize: '13px', fontWeight: 700, color: '#6366F1', textDecoration: 'none' }}>Lihat Galeri</Link>
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            {latestEvents.map((event: any, i: number) => (
-              <Link key={event.id} href={`/galeri/${event.id}`} style={{ textDecoration: 'none' }}>
-                <div style={{ height: '160px', borderRadius: '20px', overflow: 'hidden', position: 'relative', background: PLACEHOLDER_COLORS[i % 3] }}>
-                  {event.foto_cover_url && (
-                    <img 
-                      src={event.foto_cover_url.replace('/upload/', '/upload/w_500,c_scale,q_auto/')} 
-                      alt={event.nama_event} 
-                      loading="lazy"
-                      style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
-                    />
-                  )}
-                  <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '16px', background: 'linear-gradient(to top, rgba(17,24,39,0.8), transparent)' }}>
-                     <div style={{ color: 'white', fontSize: '14px', fontWeight: 800 }}>{event.nama_event}</div>
-                     <div style={{ color: 'rgba(255,255,255,0.7)', fontSize: '11px', fontWeight: 600 }}>{new Date(event.tanggal).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}</div>
-                  </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          {latestEvents.map((event: any, i: number) => (
+            <Link key={event.id} href={`/galeri/${event.id}`} style={{ textDecoration: 'none' }}>
+              <div style={{ height: '160px', borderRadius: '20px', overflow: 'hidden', position: 'relative', background: PLACEHOLDER_COLORS[i % 3] }}>
+                {event.foto_cover_url && (
+                  <img 
+                    src={event.foto_cover_url.replace('/upload/', '/upload/w_500,c_scale,q_auto/')} 
+                    alt={event.nama_event} 
+                    loading="lazy"
+                    style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+                  />
+                )}
+                <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '16px', background: 'linear-gradient(to top, rgba(17,24,39,0.8), transparent)' }}>
+                   <div style={{ color: 'white', fontSize: '14px', fontWeight: 800 }}>{event.nama_event}</div>
+                   <div style={{ color: 'rgba(255,255,255,0.7)', fontSize: '11px', fontWeight: 600 }}>{new Date(event.tanggal).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}</div>
                 </div>
-              </Link>
-            ))}
-          </div>
+              </div>
+            </Link>
+          ))}
         </div>
       </div>
-    </main>
+    </>
   )
 }
 
-// Sub-components untuk merapikan kode (opsional, bisa ditaruh di file terpisah)
+// UI Components
+function DashboardSkeleton() {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite' }}>
+      <div style={{ height: '160px', borderRadius: '24px', background: '#E5E7EB' }} />
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+        {[1, 2, 3, 4].map(i => <div key={i} style={{ height: '80px', borderRadius: '20px', background: '#E5E7EB' }} />)}
+      </div>
+      <div>
+        <div style={{ height: '24px', width: '120px', background: '#E5E7EB', borderRadius: '4px', marginBottom: '16px' }} />
+        <div style={{ height: '300px', borderRadius: '24px', background: '#E5E7EB' }} />
+      </div>
+    </div>
+  )
+}
+
 function TransactionRow({ t, isLast }: { t: any, isLast: boolean }) {
   return (
     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 0', borderBottom: isLast ? 'none' : '1px solid #F3F4F6' }}>
@@ -145,7 +171,6 @@ function TransactionRow({ t, isLast }: { t: any, isLast: boolean }) {
   )
 }
 
-// Icons (Copy paste dari kode asli lo)
 const UserIcon = () => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" style={{ width: '18px', height: '18px' }} strokeWidth={2.5}><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></svg>
 const GalleryIcon = () => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" style={{ width: '18px', height: '18px' }} strokeWidth={2.5}><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" /><circle cx="12" cy="13" r="4" /></svg>
 const IncomeIcon = () => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" style={{ width: '18px', height: '18px' }} strokeWidth={2.5}><polyline points="23 6 13.5 15.5 8.5 10.5 1 18" /><polyline points="17 6 23 6 23 12" /></svg>
