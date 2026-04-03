@@ -12,15 +12,28 @@ const PLACEHOLDER_COLORS = [
   'linear-gradient(135deg, #F8FAFC, #F1F5F9)',
 ]
 
+// [MARK: Helper resolusi super kecil untuk grid kotak-kotak (lebih cepat load)]
+function getThumbnailUrl(url: string) {
+  if (!url) return ''
+  if (url.includes('cloudinary.com')) {
+    return url.replace('/upload/', '/upload/w_300,c_scale,q_auto:low,f_auto/')
+  }
+  return url
+}
+
 export default function GaleriDetailPage({ params }: { params: any }) {
   const resolvedParams = params instanceof Promise ? React.use(params) : params;
   const id = resolvedParams.id;
 
   const { event, loading: eventLoading } = useEventById(id)
   const { foto, loading: fotoLoading } = useFotoByEvent(id)
+  
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null)
   const [touchStart, setTouchStart] = useState<number | null>(null)
   const [showUI, setShowUI] = useState(true)
+  
+  // [MARK: State untuk membatasi jumlah foto yang di-render pertama kali]
+  const [visibleCount, setVisibleCount] = useState(15)
 
   const handleNext = (e?: React.MouseEvent) => {
     e?.stopPropagation()
@@ -47,6 +60,9 @@ export default function GaleriDetailPage({ params }: { params: any }) {
   }
 
   const selectedFoto = selectedIndex !== null ? foto[selectedIndex] : null
+  
+  // [MARK: Data foto yang akan di-render di Grid]
+  const visiblePhotos = foto.slice(0, visibleCount)
 
   // Keyboard navigation
   useEffect(() => {
@@ -106,26 +122,49 @@ export default function GaleriDetailPage({ params }: { params: any }) {
             <div style={{ fontSize: '12px', color: '#6B7280', marginTop: '6px', fontWeight: 500 }}>Admin belum mengupload foto untuk album ini.</div>
           </div>
         ) : (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px' }}>
-            {foto.map((f, i) => (
-              <div 
-                key={f.id} 
-                onClick={() => { setSelectedIndex(i); setShowUI(true); }} 
-                className="animate-in"
-                style={{ 
-                   animationDelay: `${i * 0.05}s`,
-                   aspectRatio: '1', 
-                   borderRadius: '16px', 
-                   overflow: 'hidden', 
-                   background: PLACEHOLDER_COLORS[i % PLACEHOLDER_COLORS.length], 
-                   cursor: 'pointer',
-                   border: '1px solid rgba(0,0,0,0.03)',
-                   boxShadow: '0 4px 12px rgba(0,0,0,0.03)'
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px' }}>
+              {visiblePhotos.map((f, i) => (
+                <div 
+                  key={f.id} 
+                  onClick={() => { setSelectedIndex(i); setShowUI(true); }} 
+                  className="animate-in"
+                  style={{ 
+                     animationDelay: `${(i % 15) * 0.05}s`,
+                     aspectRatio: '1', 
+                     borderRadius: '16px', 
+                     overflow: 'hidden', 
+                     background: PLACEHOLDER_COLORS[i % PLACEHOLDER_COLORS.length], 
+                     cursor: 'pointer',
+                     border: '1px solid rgba(0,0,0,0.03)',
+                     boxShadow: '0 4px 12px rgba(0,0,0,0.03)'
+                  }}
+                >
+                  {/* [MARK: Pakai getThumbnailUrl untuk tampilan grid] */}
+                  <img src={getThumbnailUrl(f.foto_url)} alt={f.caption || ''} style={{ width: '100%', height: '100%', objectFit: 'cover' }} loading="lazy" />
+                </div>
+              ))}
+            </div>
+
+            {/* [MARK: Tombol Load More untuk foto yang disembunyikan] */}
+            {visibleCount < foto.length && (
+              <button 
+                onClick={() => setVisibleCount(prev => prev + 15)}
+                style={{
+                  padding: '14px',
+                  borderRadius: '16px',
+                  background: '#F3F4F6',
+                  color: '#4B5563',
+                  border: 'none',
+                  fontWeight: 800,
+                  fontSize: '13px',
+                  cursor: 'pointer',
+                  width: '100%'
                 }}
               >
-                <img src={f.foto_url} alt={f.caption || ''} style={{ width: '100%', height: '100%', objectFit: 'cover' }} loading="lazy" />
-              </div>
-            ))}
+                Muat {foto.length - visibleCount > 15 ? 15 : foto.length - visibleCount} Foto Lainnya
+              </button>
+            )}
           </div>
         )}
       </div>
@@ -150,7 +189,6 @@ export default function GaleriDetailPage({ params }: { params: any }) {
             onTouchEnd={handleTouchEnd}
             onClick={() => setShowUI(!showUI)}
           >
-            {/* Image Layer — Scrollable Viewport */}
             <div 
               key={selectedFoto.id} 
               style={{ 
@@ -168,11 +206,12 @@ export default function GaleriDetailPage({ params }: { params: any }) {
                   minHeight: '100%', 
                   width: '100%', 
                   display: 'flex', 
-                  alignItems: 'center', // Centers landscape (shorter than viewport)
+                  alignItems: 'center', 
                   justifyContent: 'center'
                 }}
                 onClick={() => setShowUI(!showUI)}
               >
+                {/* [MARK: Tetap gunakan foto_url ASLI tanpa kompresi agar jernih saat di-zoom] */}
                 <img 
                   src={selectedFoto.foto_url} 
                   alt={selectedFoto.caption || ''} 

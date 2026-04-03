@@ -13,6 +13,15 @@ const PLACEHOLDER_COLORS = [
   'linear-gradient(135deg, #4338ca, #4f46e5)',
 ]
 
+// [MARK: Helper untuk mengecilkan ukuran gambar dari Cloudinary khusus untuk thumbnail cover]
+function getOptimizedCoverUrl(url: string) {
+  if (!url) return ''
+  if (url.includes('cloudinary.com')) {
+    return url.replace('/upload/', '/upload/w_600,c_scale,q_auto,f_auto/')
+  }
+  return url
+}
+
 export default function GaleriPage() {
   const { events, loading } = useEvents()
   const [activeTahun, setActiveTahun] = useState('Semua')
@@ -80,7 +89,8 @@ export default function GaleriPage() {
                     height: '200px', 
                     background: event.foto_cover_url ? undefined : PLACEHOLDER_COLORS[i % PLACEHOLDER_COLORS.length] 
                   }}>
-                    {event.foto_cover_url && <img src={event.foto_cover_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />}
+                    {/* [MARK: Pakai getOptimizedCoverUrl dan tambahkan loading="lazy"] */}
+                    {event.foto_cover_url && <img src={getOptimizedCoverUrl(event.foto_cover_url)} alt="" loading="lazy" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />}
                   </div>
                   <div style={{ 
                     position: 'absolute', 
