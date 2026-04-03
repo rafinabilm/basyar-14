@@ -8,6 +8,7 @@ import { useTagihan, useAnggota, submitPembayaran } from '@/app/hooks/useIuran'
 import { uploadFile } from '@/app/hooks/useUpload'
 import { useDialog } from '@/app/providers/DialogProvider'
 import { supabase } from '@/app/lib/supabase'
+import { purgeAppCache } from '@/app/actions/cache'
 
 function fmt(n: number) {
   return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(n)
@@ -103,8 +104,11 @@ export default function IuranPage() {
       foto_bukti_urls: uploadedUrls,
     })
 
-    // Refresh current route to ensure server components fetch fresh data
-    if (!error) router.refresh()
+    if (!error) {
+      // Purge server cache (home, kas, layout) then refresh the client router
+      await purgeAppCache()
+      router.refresh()
+    }
 
     setSubmitting(false)
     if (error) { showAlert('Gagal mengirim data: ' + error.message); return }

@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { Card } from '@/app/components/ui/Card'
 import { insertTransaksi, updateTransaksi, TransaksiKas } from '@/app/hooks/useKas'
 import { uploadFile } from '@/app/hooks/useUpload'
+import { purgeAppCache } from '@/app/actions/cache'
 
 interface TransactionFormModalProps {
   isOpen: boolean
@@ -86,8 +87,9 @@ export function TransactionFormModal({
       return
     }
 
-    // Refresh the route so server components show updated data
-    try { router.refresh() } catch (e) { /* no-op */ }
+    // Purge server cache and refresh client router so pages update immediately
+    await purgeAppCache()
+    router.refresh()
 
     onSuccess()
     handleClose()

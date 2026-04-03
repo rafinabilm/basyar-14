@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useDialog } from '@/app/providers/DialogProvider'
+import { purgeAppCache } from '@/app/actions/cache'
 import { restoreTransaksi, deletePermanently, getArchivedKas } from '@/app/hooks/useKas'
 import { Card } from '@/app/components/ui/Card'
 import { PageHeader } from '@/app/components/ui/PageHeader'
@@ -59,7 +60,8 @@ export default function ArsipPage() {
     } else {
       showAlert('Transaksi berhasil dikembalikan')
       fetchArchived()
-      try { router.refresh() } catch (e) { /* no-op */ }
+      await purgeAppCache()
+      router.refresh()
     }
   }
 
@@ -80,7 +82,8 @@ export default function ArsipPage() {
     } else {
       showAlert('Transaksi berhasil dihapus permanen')
       fetchArchived()
-      try { router.refresh() } catch (e) { /* no-op */ }
+      await purgeAppCache()
+      router.refresh()
     }
   }
 

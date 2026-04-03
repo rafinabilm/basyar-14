@@ -9,6 +9,7 @@ import { EmptyState } from '@/app/components/ui/EmptyState'
 import { ImageViewer } from '@/app/components/ui/ImageViewer'
 import { useKas, archiveTransaksi, TransaksiKas } from '@/app/hooks/useKas'
 import { useDialog } from '@/app/providers/DialogProvider'
+import { purgeAppCache } from '@/app/actions/cache'
 
 function fmt(n: number) {
   return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(Math.abs(n))
@@ -30,7 +31,8 @@ export default function AdminKasPage() {
     else {
       showAlert('Transaksi berhasil diarsipkan')
       refetch()
-      try { router.refresh() } catch (e) { /* no-op */ }
+      await purgeAppCache()
+      router.refresh()
     }
   }
 
