@@ -1,8 +1,8 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { useRouter } from 'next/navigation'
-import { Card } from '@/app/components/ui/Card'
 import { insertTransaksi, updateTransaksi, TransaksiKas } from '@/app/hooks/useKas'
 import { uploadFile } from '@/app/hooks/useUpload'
 import { purgeAppCache } from '@/app/actions/cache'
@@ -25,6 +25,7 @@ export function TransactionFormModal({
   const [saving, setSaving] = useState(false)
   const [files, setFiles] = useState<File[]>([])
   const [existingBukti, setExistingBukti] = useState<string | null>(null)
+  const [mounted, setMounted] = useState(false)
   const router = useRouter()
 
   type FormState = {
@@ -45,7 +46,10 @@ export function TransactionFormModal({
 
   const [form, setForm] = useState<FormState>(initialForm)
 
-  // Keep form in sync when editingTransaction prop changes
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
   useEffect(() => {
     if (editingTransaction) {
       setForm({
@@ -55,22 +59,23 @@ export function TransactionFormModal({
         kategori: editingTransaction.kategori,
         tanggal: editingTransaction.tanggal,
       })
-      setExistingBukti(editingTransaction.foto_bukti_urls && editingTransaction.foto_bukti_urls.length > 0 ? editingTransaction.foto_bukti_urls[0] : null)
+      setExistingBukti(
+        editingTransaction.foto_bukti_urls?.length > 0
+          ? editingTransaction.foto_bukti_urls[0]
+          : null
+      )
     } else {
       setForm(initialForm)
       setExistingBukti(null)
     }
   }, [editingTransaction])
 
-  // Prevent background scroll while modal is open
   useEffect(() => {
     document.body.style.overflow = isOpen ? 'hidden' : ''
-    return () => {
-      document.body.style.overflow = ''
-    }
+    return () => { document.body.style.overflow = '' }
   }, [isOpen])
 
-  if (!isOpen) return null
+  if (!isOpen || !mounted) return null
 
   const handleSave = async () => {
     if (!form.jumlah || !form.keterangan) {
@@ -81,14 +86,13 @@ export function TransactionFormModal({
 
     let foto_bukti_urls: string[] = existingBukti ? [existingBukti] : []
 
-    // Upload all selected files
     if (files.length > 0) {
       const uploadedUrls: string[] = []
       for (const file of files) {
         const url = await uploadFile(file, 'basyar14/kas')
         if (url) uploadedUrls.push(url)
       }
-      foto_bukti_urls = uploadedUrls.length > 0 ? uploadedUrls : foto_bukti_urls
+      if (uploadedUrls.length > 0) foto_bukti_urls = uploadedUrls
     }
 
     const payload = {
@@ -97,12 +101,9 @@ export function TransactionFormModal({
       foto_bukti_urls,
     } as any
 
-    let res
-    if (editingTransaction) {
-      res = await updateTransaksi(editingTransaction.id, payload)
-    } else {
-      res = await insertTransaksi(payload)
-    }
+    const res = editingTransaction
+      ? await updateTransaksi(editingTransaction.id, payload)
+      : await insertTransaksi(payload)
 
     setSaving(false)
     if (res.error) {
@@ -110,10 +111,8 @@ export function TransactionFormModal({
       return
     }
 
-    // Purge server cache and refresh client router so pages update immediately
     await purgeAppCache()
     router.refresh()
-
     onSuccess()
     handleClose()
   }
@@ -125,43 +124,57 @@ export function TransactionFormModal({
     onClose()
   }
 
-  return (
+  const modal = (
     <div
       style={{
         position: 'fixed',
         inset: 0,
-        background: 'rgba(0, 0, 0, 0.5)',
-        zIndex: 1000,
+        background: 'rgba(0, 0, 0, 0.55)',
+        zIndex: 99999,
         display: 'flex',
-        alignItems: 'center',
+        alignItems: 'flex-end',
         justifyContent: 'center',
-        padding: '24px',
+        backdropFilter: 'blur(4px)',
+        WebkitBackdropFilter: 'blur(4px)',
+        animation: 'tfmFadeIn 0.2s ease-out',
       }}
       onClick={handleClose}
     >
       <div
         style={{
-          width: 'min(720px, 100%)',
-          maxHeight: '90vh',
+          width: '100%',
+          maxWidth: '480px',
+          maxHeight: '92dvh',
           background: 'white',
-          borderRadius: '12px',
-          padding: '24px 20px',
+          borderRadius: '24px 24px 0 0',
+          padding: '24px 20px 40px',
           overflow: 'auto',
+          animation: 'tfmSlideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
         }}
-        onClick={(e) => e.stopPropagation()}
+        onClick={e => e.stopPropagation()}
       >
+        {/* Drag handle */}
+        <div style={{ width: '36px', height: '4px', background: '#E5E7EB', borderRadius: '2px', margin: '0 auto 20px' }} />
+
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-          <h2 style={{ fontSize: '20px', fontWeight: 800, color: '#111827' }}>
+          <h2 style={{ fontSize: '20px', fontWeight: 800, color: '#111827', fontFamily: 'Space Grotesk, sans-serif' }}>
             {editingTransaction ? 'Edit Transaksi' : 'Catat Transaksi Baru'}
           </h2>
           <button
             onClick={handleClose}
             style={{
-              background: 'none',
+              background: '#F3F4F6',
               border: 'none',
-              fontSize: '24px',
+              width: '32px',
+              height: '32px',
+              borderRadius: '50%',
               cursor: 'pointer',
-              color: '#9CA3AF',
+              color: '#6B7280',
+              fontSize: '16px',
+              fontWeight: 800,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
             }}
           >
             ✕
@@ -175,20 +188,23 @@ export function TransactionFormModal({
               Jenis Transaksi
             </label>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-              {(['pengeluaran', 'pemasukan'] as const).map((j) => (
+              {(['pengeluaran', 'pemasukan'] as const).map(j => (
                 <button
                   key={j}
-                  onClick={() => setForm((p) => ({ ...p, jenis: j }))}
+                  onClick={() => setForm(p => ({ ...p, jenis: j }))}
                   style={{
                     padding: '12px',
-                    borderRadius: '10px',
+                    borderRadius: '12px',
                     background: form.jenis === j ? (j === 'pemasukan' ? '#ECFDF5' : '#FEF2F2') : '#F9FAFB',
-                    border: form.jenis === j ? `2px solid ${j === 'pemasukan' ? '#10B981' : '#EF4444'}` : '1px solid #F3F4F6',
+                    border: form.jenis === j
+                      ? `2px solid ${j === 'pemasukan' ? '#10B981' : '#EF4444'}`
+                      : '1px solid #F3F4F6',
                     color: form.jenis === j ? (j === 'pemasukan' ? '#10B981' : '#EF4444') : '#6B7280',
                     fontWeight: 800,
                     fontSize: '13px',
                     cursor: 'pointer',
                     textTransform: 'capitalize',
+                    fontFamily: 'Nunito, sans-serif',
                   }}
                 >
                   {j}
@@ -197,7 +213,7 @@ export function TransactionFormModal({
             </div>
           </div>
 
-          {/* Date */}
+          {/* Tanggal */}
           <div>
             <label style={{ fontSize: '11px', fontWeight: 800, letterSpacing: '0.5px', textTransform: 'uppercase', color: '#9CA3AF', display: 'block', marginBottom: '8px' }}>
               Tanggal
@@ -205,18 +221,8 @@ export function TransactionFormModal({
             <input
               type="date"
               value={form.tanggal}
-              onChange={(e) => setForm((p) => ({ ...p, tanggal: e.target.value }))}
-              style={{
-                width: '100%',
-                background: '#F9FAFB',
-                border: '1px solid #F3F4F6',
-                borderRadius: '12px',
-                padding: '12px',
-                fontSize: '13px',
-                color: '#111827',
-                fontFamily: 'Nunito, sans-serif',
-                outline: 'none',
-              }}
+              onChange={e => setForm(p => ({ ...p, tanggal: e.target.value }))}
+              style={{ width: '100%', background: '#F9FAFB', border: '1px solid #F3F4F6', borderRadius: '12px', padding: '12px', fontSize: '13px', color: '#111827', fontFamily: 'Nunito, sans-serif', outline: 'none' }}
             />
           </div>
 
@@ -227,23 +233,14 @@ export function TransactionFormModal({
             </label>
             <input
               type="text"
+              inputMode="numeric"
               placeholder="0"
               value={form.jumlah}
-              onChange={(e) => {
+              onChange={e => {
                 const raw = e.target.value.replace(/\D/g, '')
-                setForm((p) => ({ ...p, jumlah: raw ? new Intl.NumberFormat('id-ID').format(parseInt(raw)) : '' }))
+                setForm(p => ({ ...p, jumlah: raw ? new Intl.NumberFormat('id-ID').format(parseInt(raw)) : '' }))
               }}
-              style={{
-                width: '100%',
-                background: '#F9FAFB',
-                border: '1px solid #F3F4F6',
-                borderRadius: '12px',
-                padding: '12px',
-                fontSize: '13px',
-                color: '#111827',
-                fontFamily: 'Nunito, sans-serif',
-                outline: 'none',
-              }}
+              style={{ width: '100%', background: '#F9FAFB', border: '1px solid #F3F4F6', borderRadius: '12px', padding: '12px', fontSize: '16px', fontWeight: 800, color: '#111827', fontFamily: 'Space Grotesk, monospace', outline: 'none' }}
             />
           </div>
 
@@ -256,18 +253,8 @@ export function TransactionFormModal({
               type="text"
               placeholder="Gaji marbot, Beli konsumsi, dll"
               value={form.keterangan}
-              onChange={(e) => setForm((p) => ({ ...p, keterangan: e.target.value }))}
-              style={{
-                width: '100%',
-                background: '#F9FAFB',
-                border: '1px solid #F3F4F6',
-                borderRadius: '12px',
-                padding: '12px',
-                fontSize: '13px',
-                color: '#111827',
-                fontFamily: 'Nunito, sans-serif',
-                outline: 'none',
-              }}
+              onChange={e => setForm(p => ({ ...p, keterangan: e.target.value }))}
+              style={{ width: '100%', background: '#F9FAFB', border: '1px solid #F3F4F6', borderRadius: '12px', padding: '12px', fontSize: '13px', color: '#111827', fontFamily: 'Nunito, sans-serif', outline: 'none' }}
             />
           </div>
 
@@ -278,18 +265,8 @@ export function TransactionFormModal({
             </label>
             <select
               value={form.kategori}
-              onChange={(e) => setForm((p) => ({ ...p, kategori: e.target.value }))}
-              style={{
-                width: '100%',
-                background: '#F9FAFB',
-                border: '1px solid #F3F4F6',
-                borderRadius: '12px',
-                padding: '12px',
-                fontSize: '13px',
-                color: '#111827',
-                fontFamily: 'Nunito, sans-serif',
-                outline: 'none',
-              }}
+              onChange={e => setForm(p => ({ ...p, kategori: e.target.value }))}
+              style={{ width: '100%', background: '#F9FAFB', border: '1px solid #F3F4F6', borderRadius: '12px', padding: '12px', fontSize: '13px', color: '#111827', fontFamily: 'Nunito, sans-serif', outline: 'none' }}
             >
               <option value="lainnya">Lainnya</option>
               <option value="iuran">Iuran</option>
@@ -302,89 +279,54 @@ export function TransactionFormModal({
             <label style={{ fontSize: '11px', fontWeight: 800, letterSpacing: '0.5px', textTransform: 'uppercase', color: '#9CA3AF', display: 'block', marginBottom: '8px' }}>
               Bukti Transfer (Opsional)
             </label>
-            <label
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                justifyContent: 'center',
-                height: '80px',
-                border: '2px dashed #6366F1',
-                borderRadius: '14px',
-                background: '#F5F7FF',
-                cursor: 'pointer',
-                transition: 'all 0.2s',
-              }}
-            >
-              <input
-                type="file"
-                accept="image/*"
-                multiple
-                style={{ display: 'none' }}
-                onChange={(e) => setFiles(Array.from(e.target.files ?? []))}
-              />
-              <div style={{ fontSize: '12px', color: '#6366F1', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '8px', textAlign: 'center' }}>
-                {files.length > 0 ? (
-                  <span>✓ {files.length} foto dipilih</span>
-                ) : (
-                  <span>📸 Upload Bukti - Bisa Lebih dari 1 Foto</span>
-                )}
+            <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '72px', border: '2px dashed #6366F1', borderRadius: '14px', background: '#F5F7FF', cursor: 'pointer' }}>
+              <input type="file" accept="image/*" multiple style={{ display: 'none' }} onChange={e => setFiles(Array.from(e.target.files ?? []))} />
+              <div style={{ fontSize: '12px', color: '#6366F1', fontWeight: 700 }}>
+                {files.length > 0 ? `✓ ${files.length} foto dipilih` : '📸 Upload Bukti — bisa lebih dari 1 foto'}
               </div>
             </label>
-
-            {/* File list */}
             {files.length > 0 && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '12px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginTop: '10px' }}>
                 {files.map((file, idx) => (
                   <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 12px', background: '#EEF2FF', borderRadius: '8px', fontSize: '12px' }}>
-                    <span style={{ color: '#4F46E5', fontWeight: 600 }}>{file.name}</span>
-                    <button
-                      onClick={() => setFiles((prev) => prev.filter((_, i) => i !== idx))}
-                      style={{ background: 'none', border: 'none', color: '#EF4444', cursor: 'pointer', fontWeight: 800 }}
-                    >
-                      ✕
-                    </button>
+                    <span style={{ color: '#4F46E5', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '80%' }}>{file.name}</span>
+                    <button onClick={() => setFiles(prev => prev.filter((_, i) => i !== idx))} style={{ background: 'none', border: 'none', color: '#EF4444', cursor: 'pointer', fontWeight: 800, flexShrink: 0 }}>✕</button>
                   </div>
                 ))}
               </div>
             )}
           </div>
 
-          {/* Save Button */}
+          {/* Save */}
           <button
             onClick={handleSave}
             disabled={saving || !form.jumlah || !form.keterangan}
             style={{
               width: '100%',
-              padding: '14px',
+              padding: '15px',
               background: saving || !form.jumlah || !form.keterangan ? '#D1D5DB' : '#6366F1',
               color: 'white',
               border: 'none',
-              borderRadius: '12px',
+              borderRadius: '14px',
               fontSize: '14px',
               fontWeight: 800,
               cursor: saving || !form.jumlah || !form.keterangan ? 'not-allowed' : 'pointer',
               fontFamily: 'Nunito, sans-serif',
-              marginTop: '8px',
+              marginTop: '4px',
+              boxShadow: saving || !form.jumlah || !form.keterangan ? 'none' : '0 4px 12px rgba(99,102,241,0.25)',
             }}
           >
-            {saving ? 'Menyimpan...' : editingTransaction ? 'Perbarui' : 'Catat Transaksi'}
+            {saving ? 'Menyimpan...' : editingTransaction ? 'Perbarui Transaksi' : 'Catat Transaksi'}
           </button>
         </div>
-
-        <style>{`
-          @keyframes slideUp {
-            from {
-              transform: translateY(100%);
-              opacity: 0;
-            }
-            to {
-              transform: translateY(0);
-              opacity: 1;
-            }
-          }
-        `}</style>
       </div>
+
+      <style>{`
+        @keyframes tfmFadeIn { from { opacity: 0 } to { opacity: 1 } }
+        @keyframes tfmSlideUp { from { opacity: 0; transform: translateY(40px) } to { opacity: 1; transform: translateY(0) } }
+      `}</style>
     </div>
   )
+
+  return createPortal(modal, document.body)
 }
