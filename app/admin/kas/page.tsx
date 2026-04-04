@@ -9,7 +9,9 @@ import { EmptyState } from '@/app/components/ui/EmptyState'
 import { ImageViewer } from '@/app/components/ui/ImageViewer'
 import { useKas, archiveTransaksi, TransaksiKas } from '@/app/hooks/useKas'
 import { useDialog } from '@/app/providers/DialogProvider'
+import { TransactionFormModal } from '@/app/components/admin/TransactionFormModal'
 import { purgeAppCache } from '@/app/actions/cache'
+import { useEffect } from 'react'
 
 function fmt(n: number) {
   return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(Math.abs(n))
@@ -22,6 +24,13 @@ export default function AdminKasPage() {
   const [imageViewerOpen, setImageViewerOpen] = useState(false)
   const [selectedImages, setSelectedImages] = useState<string[]>([])
   const [selectedTitle, setSelectedTitle] = useState('')
+  const [isModalOpen, setIsModalOpen] = useState(false)
+  const [editingTransaction, setEditingTransaction] = useState<TransaksiKas | null>(null)
+
+  useEffect(() => {
+    // reset editing transaction when modal closes
+    if (!isModalOpen) setEditingTransaction(null)
+  }, [isModalOpen])
 
   async function handleArchive(id: string) {
     const conf = await showConfirm({ title: 'Arsipkan?', message: 'Data akan dipindahkan ke folder arsip (pembatalan). Lanjutkan?', isDestructive: true })
@@ -126,13 +135,24 @@ export default function AdminKasPage() {
                         Lihat Bukti {t.foto_bukti_urls.length > 1 ? `(${t.foto_bukti_urls.length})` : ''}
                       </button>
                     )}
+                    <div style={{ display: 'flex', gap: '8px', marginTop: '6px', justifyContent: 'flex-end' }}>
+                      <button
+                        onClick={() => {
+                          setEditingTransaction(t)
+                          setIsModalOpen(true)
+                        }}
+                        style={{ padding: '4px 8px', borderRadius: '8px', background: '#EEF2FF', border: 'none', color: '#4F46E5', fontSize: '10px', fontWeight: 800, cursor: 'pointer' }}
+                      >
+                        Edit
+                      </button>
 
-                    <button
-                      onClick={() => handleArchive(t.id)}
-                      style={{ marginTop: '4px', marginLeft: '4px', padding: '4px 8px', borderRadius: '8px', background: '#FEF2F2', border: 'none', color: '#EF4444', fontSize: '10px', fontWeight: 800, cursor: 'pointer' }}
-                    >
-                      Arsip
-                    </button>
+                      <button
+                        onClick={() => handleArchive(t.id)}
+                        style={{ padding: '4px 8px', borderRadius: '8px', background: '#FEF2F2', border: 'none', color: '#EF4444', fontSize: '10px', fontWeight: 800, cursor: 'pointer' }}
+                      >
+                        Arsip
+                      </button>
+                    </div>
                   </div>
                 </div>
               </Card>
@@ -147,6 +167,17 @@ export default function AdminKasPage() {
         images={selectedImages}
         title="Bukti Transaksi"
         description={selectedTitle}
+      />
+
+      <TransactionFormModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onSuccess={() => {
+          refetch()
+          showAlert('Transaksi berhasil diperbarui')
+        }}
+        editingTransaction={editingTransaction}
+        showAlert={showAlert}
       />
     </main>
   )
