@@ -26,6 +26,7 @@ export default function AdminKasPage() {
   const [selectedTitle, setSelectedTitle] = useState('')
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingTransaction, setEditingTransaction] = useState<TransaksiKas | null>(null)
+  const [visibleCount, setVisibleCount] = useState(10)
 
   useEffect(() => {
     // reset editing transaction when modal closes
@@ -103,7 +104,7 @@ export default function AdminKasPage() {
           />
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            {transaksi.map((t) => (
+            {transaksi.slice(0, visibleCount).map((t) => (
               <Card key={t.id} style={{ padding: '16px', border: '1px solid #F3F4F6' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <div style={{ display: 'flex', gap: '14px', alignItems: 'center' }}>
@@ -157,6 +158,24 @@ export default function AdminKasPage() {
                 </div>
               </Card>
             ))}
+            {visibleCount < transaksi.length && (
+              <button
+                onClick={() => setVisibleCount((prev) => prev + 10)}
+                style={{
+                  marginTop: '12px',
+                  padding: '12px',
+                  borderRadius: '12px',
+                  background: '#F9FAFB',
+                  color: '#4B5563',
+                  border: '1px solid #E5E7EB',
+                  fontWeight: 700,
+                  fontSize: '14px',
+                  cursor: 'pointer',
+                }}
+              >
+                Tampilkan Lebih Banyak
+              </button>
+            )}
           </div>
         )}
       </div>

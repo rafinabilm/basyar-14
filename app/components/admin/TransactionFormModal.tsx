@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Card } from '@/app/components/ui/Card'
 import { insertTransaksi, updateTransaksi, TransaksiKas } from '@/app/hooks/useKas'
@@ -27,25 +27,48 @@ export function TransactionFormModal({
   const [existingBukti, setExistingBukti] = useState<string | null>(null)
   const router = useRouter()
 
-  const initialForm = {
-    jenis: 'pengeluaran' as const,
+  type FormState = {
+    jenis: 'pengeluaran' | 'pemasukan'
+    jumlah: string
+    keterangan: string
+    kategori: string
+    tanggal: string
+  }
+
+  const initialForm: FormState = {
+    jenis: 'pengeluaran',
     jumlah: '',
     keterangan: '',
     kategori: 'lainnya',
     tanggal: new Date().toISOString().split('T')[0],
   }
 
-  const [form, setForm] = useState(
-    editingTransaction
-      ? {
-          jenis: editingTransaction.jenis,
-          jumlah: String(editingTransaction.jumlah),
-          keterangan: editingTransaction.keterangan,
-          kategori: editingTransaction.kategori,
-          tanggal: editingTransaction.tanggal,
-        }
-      : initialForm
-  )
+  const [form, setForm] = useState<FormState>(initialForm)
+
+  // Keep form in sync when editingTransaction prop changes
+  useEffect(() => {
+    if (editingTransaction) {
+      setForm({
+        jenis: editingTransaction.jenis,
+        jumlah: String(editingTransaction.jumlah),
+        keterangan: editingTransaction.keterangan,
+        kategori: editingTransaction.kategori,
+        tanggal: editingTransaction.tanggal,
+      })
+      setExistingBukti(editingTransaction.foto_bukti_urls && editingTransaction.foto_bukti_urls.length > 0 ? editingTransaction.foto_bukti_urls[0] : null)
+    } else {
+      setForm(initialForm)
+      setExistingBukti(null)
+    }
+  }, [editingTransaction])
+
+  // Prevent background scroll while modal is open
+  useEffect(() => {
+    document.body.style.overflow = isOpen ? 'hidden' : ''
+    return () => {
+      document.body.style.overflow = ''
+    }
+  }, [isOpen])
 
   if (!isOpen) return null
 
@@ -110,19 +133,20 @@ export function TransactionFormModal({
         background: 'rgba(0, 0, 0, 0.5)',
         zIndex: 1000,
         display: 'flex',
-        alignItems: 'flex-end',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '24px',
       }}
       onClick={handleClose}
     >
       <div
         style={{
-          width: '100%',
+          width: 'min(720px, 100%)',
           maxHeight: '90vh',
           background: 'white',
-          borderRadius: '24px 24px 0 0',
+          borderRadius: '12px',
           padding: '24px 20px',
           overflow: 'auto',
-          animation: 'slideUp 0.3s ease-out',
         }}
         onClick={(e) => e.stopPropagation()}
       >
